@@ -4,6 +4,7 @@ import axios from 'axios';
 import * as Google from 'expo-auth-session/providers/google';
 import { StatusBar } from 'expo-status-bar';
 
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useReducer, useState } from 'react';
 import {
@@ -50,8 +51,14 @@ const Login = ({
     const [isSuccess, setIsSuccess] = useState(false);
     const [request, response, promptAsync] = Google.useAuthRequest({
         iosClientId: '233487864072-0j8qc859fmajv39pfd1g5r3qlsiuir07.apps.googleusercontent.com',
-        androidClientId: '233487864072-2najknfkasvsk33dj70rucmbj33h6eni.apps.googleusercontent.com'
+        androidClientId: '233487864072-2najknfkasvsk33dj70rucmbj33h6eni.apps.googleusercontent.com',
     })
+    GoogleSignin.configure({
+        scopes: ['profile', 'email'],
+        webClientId: '233487864072-ldpmp56m9cr11utl8ev17l94a5jf63h9.apps.googleusercontent.com',
+        iosClientId: '233487864072-0j8qc859fmajv39pfd1g5r3qlsiuir07.apps.googleusercontent.com'
+    });
+
     const fetchUserProfile = async () => {
         const userProfileResponse = await get('/users/me');
         if (userProfileResponse.status === 200) {
@@ -59,7 +66,10 @@ const Login = ({
         }
     }
     const handleLoginWithGoogle = async () => {
+        console.log(response);
         if (response?.type === 'success') {
+            console.log(response.authentication?.accessToken);
+            console.log(response);
             try {
                 const fetchRes = await axios.post(`https://api.samsu-fpt.software/api/auth/login-google?accessToken=${response.authentication?.accessToken}`);
                 if (fetchRes.status === 200) {
@@ -80,6 +90,20 @@ const Login = ({
             }
         }
     }
+
+    const handleGoogleLogin = async () => {
+        try {
+            await GoogleSignin.hasPlayServices();
+            const userInfo = await GoogleSignin.signIn();
+
+            // You can now use userInfo.idToken to authenticate with your backend server
+            console.log('Google login success:', userInfo);
+
+        } catch (error) {
+            console.error('Error with Google login:', error);
+        }
+    };
+
     const handleLogin = async () => {
         setError(null);
         const usernameOrEmail = formState.inputValues['username'];
@@ -191,7 +215,7 @@ const Login = ({
                     <SocialButton
                         name="Google"
                         icon={icons.google}
-                        onPress={() => promptAsync()}
+                        onPress={handleGoogleLogin}
                     />
                 </View>
             </ScrollView>

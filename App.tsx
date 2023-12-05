@@ -43,7 +43,7 @@ export default function App() {
     }
 
     return (
-        <AppContextProvider>
+        <AppContextProvider children={undefined}>
             <SafeAreaProvider onLayout={onLayoutRootView}>
                 <AppNavigation />
             </SafeAreaProvider>

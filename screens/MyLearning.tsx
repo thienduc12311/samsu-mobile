@@ -1,16 +1,20 @@
+import { useIsFocused } from '@react-navigation/native'
+import React, { useEffect, useState } from 'react'
 import {
-    View,
-    Text,
-    StyleSheet,
+    ActivityIndicator,
     FlatList,
+    StyleSheet,
+    Text,
     TouchableOpacity,
+    View,
 } from 'react-native'
-import React from 'react'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { COLORS } from '../constants'
 import { ScrollView } from 'react-native-virtualized-view'
 import MyLearningCard from '../components/MyLearningCard'
-import { MyLearningBootcamps, MyLearningCourses } from '../data/utils'
+import { COLORS } from '../constants'
+import { useAppContext } from '../contexts/AppContext'
+import { get } from '../utils/helpers/api-helper'
+import { isParticipated } from '../utils/helpers/event-helper'
 
 const MyLearning = ({
     navigation
@@ -18,7 +22,34 @@ const MyLearning = ({
     /***
      * Render header
      */
+    const [loading, setLoading] = useState(true); // Loading state
+    const [search, setSearch] = useState('');
+    const { state } = useAppContext();
+    const [events, setEvents] = useState<any[]>([]);
+    const isFocused = useIsFocused();
 
+    const { user } = state;
+    useEffect(() => {
+        let upcomingEvents: any[] = [];
+        let pastEvents: any[] = [];
+
+        // Simulate fetching questions from an API 
+        const fetchData = async () => {
+            try {
+                const response = await get('/events/public');
+                if (response.status === 200) {
+                    const events = (response.data as any).content;
+                    setEvents(events);
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            } finally {
+                setLoading(false); // Set loading to false once the data is fetched or an error occurs
+            }
+        };
+
+        fetchData();
+    }, [isFocused]); 
     const renderHeader = () => {
         return (
             <View style={{ alignItems: 'center' }}>
@@ -29,7 +60,7 @@ const MyLearning = ({
                         color: COLORS.black,
                     }}
                 >
-                    My Learning
+                    Public Event
                 </Text>
             </View>
         )
@@ -46,19 +77,19 @@ const MyLearning = ({
                     marginBottom: 64,
                 }}
             >
-                <Text style={styles.subtitle}>Course</Text>
+                <Text style={styles.subtitle}>Events:</Text>
                 <FlatList
-                    data={MyLearningCourses.slice(0, 3)} // Render only the first three elements
-                    // @ts-expect-error TS(2769): No overload matches this call.
+                    data={events} // Render only the first three elements
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <MyLearningCard
-                            image={item.image}
-                            type={item.type}
-                            chapter={item.chapter}
-                            name={item.name}
-                            description={item.description}
-                            onPress={() => navigation.navigate('Detail')}
+                            image={(item as any).bannerUrl}
+                            type={isParticipated(user?.rollnumber as string, item)}
+                            numberOfParticipants={item.participants.length}
+                            name={(item as any).title}
+                            description={item.content}
+                            eventStartTimestamp={item.startTime}
+                            onPress={() => navigation.navigate('EventDetail', { event: item })}
                         />
                     )}
                 />
@@ -76,14 +107,14 @@ const MyLearning = ({
                         See all
                     </Text>
                 </TouchableOpacity>
-                <Text style={styles.subtitle}>Bootcamp</Text>
+                {/* <Text style={styles.subtitle}>Bootcamp</Text>
                 <FlatList
                     data={MyLearningBootcamps.slice(0, 3)}
                     // @ts-expect-error TS(2769): No overload matches this call.
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <MyLearningCard
-                            image={item.image}
+                            // image={item.image}
                             type={item.type}
                             chapter={item.chapter}
                             name={item.name}
@@ -105,7 +136,7 @@ const MyLearning = ({
                     >
                         See all
                     </Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
             </View>
         )
     }
@@ -114,7 +145,10 @@ const MyLearning = ({
             <View style={styles.container}>
                 {renderHeader()}
                 <ScrollView showsVerticalScrollIndicator={false}>
-                    {renderContent()}
+                    {loading ? (
+                        // Render a loading spinner while fetching data
+                        <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 20 }} />
+                    ) : renderContent()}
                 </ScrollView>
             </View>
         </SafeAreaView>

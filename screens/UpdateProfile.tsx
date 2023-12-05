@@ -1,27 +1,26 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native'
-import React, {
-    useState,
-    useReducer,
-    useCallback,
-    useEffect,
-    useRef,
-} from 'react'
-import { ScrollView } from 'react-native-virtualized-view'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { COLORS, icons, images } from '../constants'
-import { validateInput } from '../utils/actions/formActions'
-import { reducer } from '../utils/reducers/formReducers'
-import Input from '../components/Input'
-import Button from '../components/Button'
 import {
-    FontAwesome5,
-    MaterialCommunityIcons,
-    Feather,
+    AntDesign, Feather, FontAwesome5,
+    MaterialCommunityIcons
 } from '@expo/vector-icons'
 import { StatusBar } from 'expo-status-bar'
+import React, {
+    useCallback,
+    useEffect,
+    useReducer,
+    useRef,
+    useState,
+} from 'react'
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import RBSheet from 'react-native-raw-bottom-sheet'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { ScrollView } from 'react-native-virtualized-view'
+import Button from '../components/Button'
+import Input from '../components/Input'
 import MenuItem from '../components/MenuItem'
+import { COLORS, icons, images } from '../constants'
 import { launchImagePicker } from '../utils/ImagePickerHelper'
+import { validateInput } from '../utils/actions/formActions'
+import { reducer } from '../utils/reducers/formReducers'
 
 const isTestMode = true
 
@@ -43,7 +42,9 @@ const initialState = {
     formIsValid: false,
 }
 
-const UpdateProfile = () => {
+const UpdateProfile = ({
+    navigation
+}: any) => {
     const [error, setError] = useState()
     const [isLoading, setIsLoading] = useState(false)
     const [formState, dispatchFormState] = useReducer(reducer, initialState)
@@ -66,7 +67,33 @@ const UpdateProfile = () => {
             Alert.alert('An error occured', error)
         }
     }, [error])
-
+    const renderHeader = () => {
+        return (
+            <View
+                style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: 12,
+                }}
+            >
+                <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <AntDesign
+                        name="arrowleft"
+                        size={24}
+                        color={COLORS.black}
+                    />
+                </TouchableOpacity>
+                <TouchableOpacity>
+                    <Feather
+                        name="more-horizontal"
+                        size={24}
+                        color={COLORS.black}
+                    />
+                </TouchableOpacity>
+            </View>
+        )
+    }
     const pickImage = async () => {
         try {
             const tempUri = await launchImagePicker()
@@ -83,6 +110,7 @@ const UpdateProfile = () => {
         <SafeAreaView style={styles.area}>
             <StatusBar hidden />
             <View style={styles.container}>
+                {renderHeader()}
                 <View style={{ alignItems: 'center' }}>
                     <Text
                         style={{

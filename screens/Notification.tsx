@@ -1,24 +1,25 @@
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    FlatList,
-} from 'react-native'
-import React from 'react'
-import { SafeAreaView } from 'react-native-safe-area-context'
 import { AntDesign, Feather } from '@expo/vector-icons'
-import { COLORS } from '../constants'
+import React from 'react'
+import {
+    FlatList,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { ScrollView } from 'react-native-virtualized-view'
-import { notifications } from '../data/utils'
 import NotificationCard from '../components/NotificationCard'
+import { COLORS } from '../constants'
 
 const Notification = ({
-    navigation
+    navigation, route
 }: any) => {
     /**
      * Render header
      */
+    const { myTasks } = route.params;
+    console.log(myTasks);
     const renderHeader = () => {
         return (
             <View
@@ -62,27 +63,26 @@ const Notification = ({
     const renderContent = () => {
         return (
             <View>
-                <Text style={styles.subtitle}>Yesterday</Text>
-                <FlatList
-                    data={notifications}
-                    // @ts-expect-error TS(2769): No overload matches this call.
-                    keyExtractor={(item) => item.id}
-                    showsVerticalScrollIndicator={false}
-                    renderItem={({ item }) => {
-                        return (
-                            <NotificationCard
-                                percentage={item.percentage}
-                                title={item.title}
-                                duration={item.duration}
-                                onPress={() =>
-                                    navigation.navigate('AccessChapter')
-                                }
-                            />
-                        )
-                    }}
-                />
                 <Text style={styles.subtitle}>This Week</Text>
                 <FlatList
+                    data={myTasks}
+                    keyExtractor={(item) => item.id}
+                    showsVerticalScrollIndicator={false}
+                    renderItem={({ item }) => {
+                        return (
+                            <NotificationCard
+                                percentage={100}
+                                title={item.task.title}
+                                duration={item.task.content}
+                                onPress={() =>
+                                    navigation.navigate('TaskDetails', { task: item })
+                                }
+                            />
+                        )
+                    }}
+                />
+                {/* <Text style={styles.subtitle}>This Week</Text>
+                <FlatList
                     data={notifications}
                     // @ts-expect-error TS(2769): No overload matches this call.
                     keyExtractor={(item) => item.id}
@@ -99,7 +99,7 @@ const Notification = ({
                             />
                         )
                     }}
-                />
+                /> */}
             </View>
         )
     }

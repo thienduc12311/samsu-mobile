@@ -1,13 +1,13 @@
 import {
-    validateString,
-    validateEmail,
-    validatePassword,
-    validateCreditCardNumber,
-    validateExpiryDate,
     validateCVV,
+    validateCreditCardNumber,
+    validateEmail,
+    validateExpiryDate,
+    validatePassword,
+    validateString,
 } from '../ValidationConstraints'
 
-export const validateInput = (inputId: any, inputValue: any) => {
+export const validateInput = (inputId: any, inputValue: any, refInputValue?: any) => {
     if (
         inputId === 'fullName' ||
         inputId === 'shortName' ||
@@ -24,7 +24,7 @@ export const validateInput = (inputId: any, inputValue: any) => {
     } else if (inputId === 'email') {
         return validateEmail(inputId, inputValue)
     } else if (inputId === 'password' || inputId === 'confirmPassword') {
-        return validatePassword(inputId, inputValue)
+        return validatePassword(inputId, inputValue, refInputValue)
     } else if (inputId === 'resetToken') {
         return validateString(inputId, inputValue)
     } else if (inputId === 'creditCardNumber') {

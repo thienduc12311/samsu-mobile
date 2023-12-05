@@ -1,19 +1,19 @@
-import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    Image,
-    FlatList,
-} from 'react-native'
-import React from 'react'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { COLORS, illustrations } from '../constants'
-import { ScrollView } from 'react-native-virtualized-view'
 import { AntDesign, Feather } from '@expo/vector-icons'
+import React from 'react'
+import {
+    FlatList,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { ScrollView } from 'react-native-virtualized-view'
 import Button from '../components/Button'
-import { certificates } from '../data/utils'
 import CertificateCard from '../components/CertificateCard'
+import { COLORS, illustrations } from '../constants'
+import { certificates } from '../data/utils'
 
 const ListCertificate = ({
     navigation
@@ -93,15 +93,14 @@ const ListCertificate = ({
                 />
                 <Text style={styles.title}>No certificate</Text>
                 <Text style={styles.subtitle}>
-                    Your course hasn't finished yet, please continue your course
-                    first
+                    You don't have any certificate yet
                 </Text>
 
                 <Button
-                    title="Next Learning"
+                    title="Join Event"
                     filled
                     onPress={() => {
-                        navigation.navigate('Detail')
+                        navigation.navigate('MyLearning')
                     }}
                     style={{
                         marginVertical: 22,

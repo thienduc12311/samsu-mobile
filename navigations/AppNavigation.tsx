@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import React, { useEffect, useState } from 'react'
+import { useAppContext } from '../contexts/AppContext'
+import { SET_USER } from '../contexts/context-type'
 import {
     AccessChapter,
     AccessChapterContent,
@@ -30,6 +32,12 @@ import {
     UpdateProfile,
     Verification,
 } from '../screens'
+import EventDetail from '../screens/EventDetail'
+import FeedbackAnswer from '../screens/FeedbackAnswer'
+import GradeTicketDetail from '../screens/GradeTicketDetails'
+import SubmitGradeTicket from '../screens/SubmitGradeTicket'
+import TaskDetails from '../screens/TaskDetails'
+import { get } from '../utils/helpers/api-helper'
 import BottomTabNavigation from './BottomTabNavigation'
 
 const Stack = createNativeStackNavigator()
@@ -37,9 +45,17 @@ const Stack = createNativeStackNavigator()
 const AppNavigation = () => {
     const [isFirstLaunch, setIsFirstLaunch] = useState(null)
     const [isLoading, setIsLoading] = useState(true)
-
+    const { state, dispatch } = useAppContext();
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
     useEffect(() => {
-        const checkIfFirstLaunch = async () => {
+        const fetchUserProfile = async () => {
+            const userProfileResponse = await get('/users/me');
+            if (userProfileResponse.status === 200) {
+                dispatch({ type: SET_USER, payload: userProfileResponse.data })
+                setIsLoggedIn(true);
+            }
+        }
+        const checkIfLoggedIn = async () => {
             try {
                 const value = await AsyncStorage.getItem('alreadyLaunched')
                 if (value === null) {
@@ -56,8 +72,8 @@ const AppNavigation = () => {
             }
             setIsLoading(false) // Set loading state to false once the check is complete
         }
-
-        checkIfFirstLaunch()
+        fetchUserProfile();
+        checkIfLoggedIn()
     }, [])
 
     if (isLoading) {
@@ -67,7 +83,7 @@ const AppNavigation = () => {
     return (
         <NavigationContainer>
             <Stack.Navigator
-                initialRouteName={isFirstLaunch ? 'Onboarding1' : 'Register'}
+                initialRouteName={isLoggedIn ? 'Main' : 'Login'}
             >
                 <Stack.Screen
                     name="Onboarding1"
@@ -115,6 +131,16 @@ const AppNavigation = () => {
                     options={{ headerShown: false }}
                 />
                 <Stack.Screen
+                    name="GradeTicketDetail"
+                    component={GradeTicketDetail}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name="SubmitGradeTicket"
+                    component={SubmitGradeTicket}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
                     name="ForgotPassword"
                     component={ForgotPassword}
                     options={{ headerShown: false }}
@@ -135,6 +161,11 @@ const AppNavigation = () => {
                     options={{ headerShown: false }}
                 />
                 <Stack.Screen
+                    name="Feedback"
+                    component={FeedbackAnswer}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
                     name="ListHistory"
                     component={ListHistory}
                     options={{ headerShown: false }}
@@ -142,6 +173,16 @@ const AppNavigation = () => {
                 <Stack.Screen
                     name="Login"
                     component={Login}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name="EventDetail"
+                    component={EventDetail}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name="TaskDetails"
+                    component={TaskDetails}
                     options={{ headerShown: false }}
                 />
                 <Stack.Screen

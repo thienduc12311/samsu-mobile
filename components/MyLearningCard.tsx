@@ -1,15 +1,21 @@
-import { View, Text, Image, TouchableOpacity } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+import { DateTime } from 'luxon'
 import React from 'react'
+import { Image, Text, TouchableOpacity, View } from 'react-native'
+import HTML from 'react-native-render-html'
 import { COLORS } from '../constants'
+import { stripHtmlTags } from '../utils/helpers/event-helper'
 
 const MyLearningCard = ({
     image,
     type,
-    chapter,
+    numberOfParticipants,
     name,
     description,
-    onPress
+    onPress, eventStartTimestamp = 1
 }: any) => {
+    const trimmedDescription = stripHtmlTags(description).slice(0, 50);
+    const eventDate = DateTime.fromMillis(eventStartTimestamp).setZone('Asia/Bangkok');
     return (
         <TouchableOpacity
             onPress={onPress}
@@ -20,7 +26,7 @@ const MyLearningCard = ({
             }}
         >
             <Image
-                source={image}
+                source={{ uri: image }}
                 resizeMode="contain"
                 style={{
                     height: 110,
@@ -40,7 +46,7 @@ const MyLearningCard = ({
                             paddingVertical: 2,
                             paddingHorizontal: 6,
                             backgroundColor:
-                                type === 'Free' ? COLORS.green : COLORS.primary,
+                                type ? COLORS.green : COLORS.secondaryGray,
                             borderRadius: 6,
                             justifyContent: 'center',
                             alignItems: 'center',
@@ -53,11 +59,37 @@ const MyLearningCard = ({
                                 color: COLORS.white,
                             }}
                         >
-                            {type}
+                            {type ? 'Registered' : 'Not Register'}
                         </Text>
                     </View>
                     <View
                         style={{
+                            flexDirection: 'row',
+                            paddingVertical: 2,
+                            paddingHorizontal: 6,
+                            borderRadius: 6,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                        }}
+                    >
+                        <Ionicons
+                            name="calendar"
+                            size={16}
+                            color={COLORS.blue}
+                        />
+                        <Text
+                            style={{
+                                fontSize: 11,
+                                fontFamily: 'regular',
+                                color: COLORS.black,
+                            }}
+                        >
+                            {eventDate.toFormat('MM/dd/yyyy')}
+                        </Text>
+                    </View>
+                    <View
+                        style={{
+                            flexDirection: 'row',
                             paddingVertical: 2,
                             paddingHorizontal: 6,
                             backgroundColor: '#F0F4FF',
@@ -66,6 +98,11 @@ const MyLearningCard = ({
                             alignItems: 'center',
                         }}
                     >
+                        <Ionicons
+                            name="ios-people-outline"
+                            size={16}
+                            color={COLORS.blue}
+                        />
                         <Text
                             style={{
                                 fontSize: 11,
@@ -73,7 +110,7 @@ const MyLearningCard = ({
                                 color: COLORS.black,
                             }}
                         >
-                            {chapter}
+                            {numberOfParticipants}
                         </Text>
                     </View>
                 </View>
@@ -86,7 +123,7 @@ const MyLearningCard = ({
                 >
                     {name}
                 </Text>
-                <Text
+                {/* <Text
                     style={{
                         fontSize: 11,
                         fontFamily: 'regular',
@@ -94,7 +131,10 @@ const MyLearningCard = ({
                     }}
                 >
                     {description}
-                </Text>
+                </Text> */}
+                <View>
+                    <HTML source={{ html: trimmedDescription }} />
+                </View>
             </View>
         </TouchableOpacity>
     )

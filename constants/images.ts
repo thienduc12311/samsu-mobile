@@ -17,7 +17,7 @@ const success1 = require('../assets/images/success.png')
 const success2 = require('../assets/images/success2.png')
 const learnconnect = require('../assets/images/learnconnect.png')
 const certificate = require('../assets/images/certificate.png')
-
+const feedback = require('../assets/images/feedback.jpeg');
 export default {
     avatar,
     avatar2,
@@ -38,4 +38,5 @@ export default {
     success2,
     learnconnect,
     certificate,
+    feedback
 }

@@ -1,14 +1,24 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native'
 import React, { useState } from 'react'
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { COLORS, SIZES, icons } from '../constants'
 
 const BookmarkItem = ({
     title,
     subtitle,
-    onPress
+    onPress,
+    status = 0
 }: any) => {
     const [isOpen, setIsOpen] = useState(false)
-
+    const getStatusColor = (status: number) => {
+        if (status === 2) return COLORS.red;
+        if (status === 1) return COLORS.green;
+        return COLORS.gray4;
+    }
+    const getStatusText = (status: number) => {
+        if (status === 2) return 'Rejected';
+        if (status === 1) return 'Approved'
+        return 'Pending';
+    }
     return (
         <TouchableOpacity onPress={onPress} style={styles.container}>
             <View
@@ -27,6 +37,26 @@ const BookmarkItem = ({
                 >
                     {title}
                 </Text>
+                <View
+                    style={{
+                        paddingVertical: 2,
+                        paddingHorizontal: 6,
+                        backgroundColor: getStatusColor(status),
+                        borderRadius: 6,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                    }}
+                >
+                    <Text
+                        style={{
+                            fontSize: 11,
+                            fontFamily: 'regular',
+                            color: COLORS.white,
+                        }}
+                    >
+                        {getStatusText(status)}
+                    </Text>
+                </View>
                 <TouchableOpacity onPress={() => setIsOpen(!isOpen)}>
                     <Image
                         source={isOpen ? icons.arrowDown : icons.arrowUp}

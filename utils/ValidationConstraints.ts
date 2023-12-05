@@ -36,7 +36,7 @@ export const validateEmail = (id: any, value: any) => {
     return validationResult && validationResult[id]
 }
 
-export const validatePassword = (id: any, value: any) => {
+export const validatePassword = (id: any, value: any, confirmValue?: any) => {
     const constraints = {
         presence: {
             allowEmpty: false,
@@ -50,7 +50,15 @@ export const validatePassword = (id: any, value: any) => {
             message: 'must be at least 6 characters',
         }
     }
-
+    // If this is the 'confirmPassword' field, also check if it matches the 'password' field
+    if (id === 'confirmPassword' && value !== confirmValue) {
+        // @ts-expect-error TS(2339): Property 'email' does not exist on type '{ presenc... Remove this comment to see the full error message
+        constraints.format = {
+            pattern: confirmValue,
+            flags: 'i',
+            message: "must match password.",
+        }
+    }
     const validationResult = validate({ [id]: value }, { [id]: constraints })
     return validationResult && validationResult[id]
 }

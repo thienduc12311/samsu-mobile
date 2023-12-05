@@ -1,21 +1,27 @@
+import { useIsFocused } from '@react-navigation/native'
+import React, { useEffect, useState } from 'react'
 import {
-    View,
-    Text,
-    StyleSheet,
-    Image,
-    TouchableOpacity,
-    TextInput,
+    ActivityIndicator,
     FlatList,
+    Image,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native'
-import React, { useState } from 'react'
+import CircularProgress from 'react-native-circular-progress-indicator'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { COLORS, FONTS, icons, images } from '../constants'
-import KeywordItem from '../components/KeywordItem'
-import { bootcamps, courses, keywordsData } from '../data/utils'
-import BannerItem from '../components/BannerItem'
-import CourseCard from '../components/CourseCard'
 import { ScrollView } from 'react-native-virtualized-view'
+import BannerItem from '../components/BannerItem'
 import BootcampCard from '../components/BootcampCard'
+import CourseCard from '../components/CourseCard'
+import KeywordItem from '../components/KeywordItem'
+import { COLORS, FONTS, icons, images } from '../constants'
+import { useAppContext } from '../contexts/AppContext'
+import { bootcamps, keywordsData } from '../data/utils'
+import { hasTimestampPassed } from '../utils/date'
+import { get } from '../utils/helpers/api-helper'
 
 const Home = ({
     navigation
@@ -23,7 +29,44 @@ const Home = ({
     /**
      * Render Home header
      */
+    const { state } = useAppContext();
+    const { user } = state;
+    const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+    const [myTasks, setMyTasks] = useState<any[]>([]);
 
+    const [pastEvents, setPastEvents] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true); // Loading state
+    const [search, setSearch] = useState('')
+    const [selectedKeywords, setSelectedKeywords] = useState<any[]>([])
+    const isFocused = useIsFocused();
+
+    useEffect(() => {
+        let upcomingEvents: any[] = [];
+        let pastEvents: any[] = [];
+        // Simulate fetching questions from an API 
+        const fetchData = async () => {
+            try {
+                const [eventsResponse, tasksResponse] = await Promise.all([get('/events/me'), get('/tasks/me')]);
+
+                if (eventsResponse.status === 200) {
+                    const events = (eventsResponse.data as any).content;
+                    upcomingEvents = (events as any[]).filter((event) => !hasTimestampPassed(event.startTime));
+                    pastEvents = (events as any[]).filter((event) => hasTimestampPassed(event.startTime));
+                    setUpcomingEvents(upcomingEvents);
+                    setPastEvents(pastEvents);
+                }
+                if (tasksResponse.status === 200) {
+                    setMyTasks((tasksResponse.data as any).content);
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            } finally {
+                setLoading(false); // Set loading to false once the data is fetched or an error occurs
+            }
+        };
+
+        fetchData();
+    }, [isFocused]); 
     const renderHeader = () => {
         return (
             <View>
@@ -52,12 +95,12 @@ const Home = ({
                                     color: COLORS.black,
                                 }}
                             >
-                                Hallo, Fahmi Haecal
+                                Hallo, there
                             </Text>
                         </TouchableOpacity>
                     </View>
                     <TouchableOpacity
-                        onPress={() => navigation.navigate('Notification')}
+                        onPress={() => navigation.navigate('Notification', { myTasks })}
                     >
                         <Image
                             source={icons.bell}
@@ -79,7 +122,6 @@ const Home = ({
      */
 
     const renderSearchBar = () => {
-        const [search, setSearch] = useState('')
 
         return (
             <View>
@@ -94,7 +136,7 @@ const Home = ({
                             color: COLORS.black,
                         }}
                     >
-                        Find a course you
+                        Find a your event
                     </Text>
                     <Text
                         style={{
@@ -102,7 +144,7 @@ const Home = ({
                             color: COLORS.black,
                         }}
                     >
-                        want to learn.
+
                     </Text>
                 </View>
                 <View
@@ -131,7 +173,7 @@ const Home = ({
                     }}
                 >
                     <TextInput
-                        placeholder="Search course here..."
+                        placeholder="Search event here..."
                         // @ts-expect-error TS(2339): Property 'secondary' does not exist on type '{ pri... Remove this comment to see the full error message
                         placeholderTextColor={COLORS.secondary}
                         value={search}
@@ -165,11 +207,8 @@ const Home = ({
      */
 
     const renderKeywords = () => {
-        const [selectedKeywords, setSelectedKeywords] = useState([])
         const handleKeywordPress = (id: any) => {
-            // @ts-expect-error TS(2345): Argument of type '(prevSelectedKeywords: never[]) ... Remove this comment to see the full error message
             setSelectedKeywords((prevSelectedKeywords) => {
-                // @ts-expect-error TS(2345): Argument of type 'any' is not assignable to parame... Remove this comment to see the full error message
                 if (prevSelectedKeywords.includes(id)) {
                     // Remove keyword from the selection if already selected
                     return prevSelectedKeywords.filter(
@@ -192,7 +231,6 @@ const Home = ({
                         <KeywordItem
                             item={item}
                             onPress={handleKeywordPress}
-                            // @ts-expect-error TS(2345): Argument of type 'string' is not assignable to par... Remove this comment to see the full error message
                             selected={selectedKeywords.includes(item.id)}
                         />
                     )}
@@ -208,7 +246,7 @@ const Home = ({
     const renderBanners = () => {
         return (
             <View>
-                <BannerItem />
+                <BannerItem navigation={navigation} />
             </View>
         )
     }
@@ -217,7 +255,7 @@ const Home = ({
      * Render Courses
      */
 
-    const renderCourses = () => {
+    const renderUpcomingEvents = () => {
         return (
             <View>
                 <View
@@ -235,7 +273,7 @@ const Home = ({
                             color: COLORS.black,
                         }}
                     >
-                        Courses
+                        My upcoming events
                     </Text>
                     <TouchableOpacity>
                         <Text
@@ -250,16 +288,16 @@ const Home = ({
                     </TouchableOpacity>
                 </View>
                 <FlatList
-                    data={courses}
-                    keyExtractor={(item) => item.id}
+                    data={upcomingEvents}
+                    keyExtractor={(item) => (item as any).id}
                     horizontal
                     showsHorizontalScrollIndicator={false}
                     renderItem={({ item }) => (
                         <CourseCard
-                            image={item.image}
-                            name={item.name}
-                            price={item.price}
-                            numStudents={item.numStudents}
+                            image={(item as any).bannerUrl}
+                            name={(item as any).title}
+                            startDate={(item as any).startTime}
+                            numStudents={(item as any).participants.length}
                             onPress={() => navigation.navigate('Detail')}
                         />
                     )}
@@ -267,7 +305,134 @@ const Home = ({
             </View>
         )
     }
+    const renderPastEvents = () => {
+        return (
+            <View>
+                <View
+                    style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 12,
+                    }}
+                >
+                    <Text
+                        style={{
+                            fontFamily: 'semiBold',
+                            fontSize: 18,
+                            color: COLORS.black,
+                        }}
+                    >
+                        My past events
+                    </Text>
+                    <TouchableOpacity>
+                        <Text
+                            style={{
+                                fontFamily: 'medium',
+                                fontSize: 14,
+                                color: COLORS.gray5,
+                            }}
+                        >
+                            See All
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+                <FlatList
+                    data={pastEvents}
+                    keyExtractor={(item) => (item as any).id}
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    renderItem={({ item }) => (
+                        <CourseCard
+                            image={(item as any).bannerUrl}
+                            name={(item as any).title}
+                            startDate={(item as any).startTime}
+                            numStudents={(item as any).participants.length}
+                            onPress={() => navigation.navigate('EventDetail', { event: item })}
+                        />
+                    )}
+                />
+            </View>
+        )
+    }
+    const renderScore = () => {
+        return (
+            <View>
+                <View
+                    style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: 12,
+                    }}
+                >
+                    <Text
+                        style={{
+                            fontFamily: 'semiBold',
+                            fontSize: 18,
+                            color: COLORS.black,
+                        }}
+                    >
+                        Overview
+                    </Text>
+                    <TouchableOpacity>
+                        <Text
+                            style={{
+                                fontFamily: 'medium',
+                                fontSize: 14,
+                                color: COLORS.gray5,
+                            }}
+                        >
+                            Details
+                        </Text>
+                    </TouchableOpacity>
+                </View>
+                <View style={{ backgroundColor: 'white' }}>
+                    {/* Basic Information */}
+                    <View style={styles.infoContainer}>
+                        {/* Name and Semester Column */}
+                        <View style={styles.textContainer}>
+                            <View style={styles.infoTextContainer}>
+                                <Text style={styles.infoLabel}>Name:</Text>
+                                <Text style={styles.infoValue}>{user?.name}</Text>
+                            </View>
+                            <View style={styles.infoTextContainer}>
+                                <Text style={styles.infoLabel}>StudentID:</Text>
+                                <Text style={styles.infoValue}>{user?.rollnumber}</Text>
+                            </View>
+                        </View>
 
+                        {/* Attended Event Column */}
+                        <View style={styles.textContainer}>
+                            <View style={styles.infoTextContainer}>
+                                <Text style={styles.infoLabel}>Semester:</Text>
+                                <Text style={styles.infoValue}>Fall 2023</Text>
+                            </View>
+                            <View style={styles.infoTextContainer}>
+                                <Text style={styles.infoLabel}>Attended event:</Text>
+                                <Text style={styles.infoValue}>{user?.attendedEvent}</Text>
+                            </View>
+                        </View>
+
+                        {user?.score && <View style={styles.progressContainer}>
+                            <CircularProgress
+                                value={user?.score}
+                                radius={50}
+                                maxValue={100}
+                                valueSuffix="%"
+                                activeStrokeColor="#4CAF50" // Green color for active progress
+                                inActiveStrokeColor="#ddd" // Gray color for inactive progress
+                            />
+                        </View>}
+
+                    </View>
+
+                    {/* Circular Progress Indicator */}
+
+                </View>
+            </View>
+        )
+    }
     /**
      * Render Bootcamp
      */
@@ -332,11 +497,20 @@ const Home = ({
             <View style={styles.container}>
                 {renderHeader()}
                 <ScrollView showsVerticalScrollIndicator={false}>
-                    {renderSearchBar()}
-                    {renderBanners()}
-                    {renderKeywords()}
-                    {renderCourses()}
-                    {renderBootcamps()}
+                    {loading ? (
+                        // Render a loading spinner while fetching data
+                        <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 20 }} />
+                    ) : (
+                        // Render other content once data is fetched
+                        <>
+                                {renderSearchBar()}
+                                {renderBanners()}
+                                {renderKeywords()}
+                            {renderScore()}
+                            {renderUpcomingEvents()}
+                            {renderPastEvents()}
+                        </>
+                    )}
                 </ScrollView>
             </View>
         </SafeAreaView>
@@ -356,6 +530,33 @@ const styles = StyleSheet.create({
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    infoContainer: {
+        flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 15
+    },
+    infoTextContainer: {
+        flex: 1,
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+    },
+    infoLabel: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    textContainer: {
+        flex: 1,
+    },
+    infoValue: {
+        fontSize: 16,
+        color: '#666',
+    },
+    progressContainer: {
         alignItems: 'center',
     },
 })

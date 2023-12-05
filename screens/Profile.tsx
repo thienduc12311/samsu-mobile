@@ -1,5 +1,8 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useNavigation } from '@react-navigation/native'
 import React, { useState } from 'react'
 import {
+    Alert,
     Image,
     Modal,
     StyleSheet,
@@ -8,20 +11,27 @@ import {
     TouchableWithoutFeedback,
     View,
 } from 'react-native'
+import QRCode from 'react-native-qrcode-svg'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ScrollView } from 'react-native-virtualized-view'
 import Button from '../components/Button'
-import CompleteProfileCard from '../components/CompleteProfileCard'
 import MenuItem from '../components/MenuItem'
 import { COLORS, icons, images } from '../constants'
+import { useAppContext } from '../contexts/AppContext'
 
 const Profile = ({
     navigation
 }: any) => {
+    const { state } = useAppContext();
+
+    // Access the user property from the context state
+    const { user } = state;
     const [modalVisible, setModalVisible] = useState(false)
     /***
      * Render header
      */
+    const { reset } = useNavigation();
+
     const renderHeader = () => {
         return (
             <View style={{ alignItems: 'center' }}>
@@ -37,7 +47,14 @@ const Profile = ({
             </View>
         )
     }
-
+    const handleLogout = async () => {
+        await AsyncStorage.removeItem('accessToken');
+        Alert.alert('', 'Logout successfully');
+        reset({
+            index: 0,
+            routes: [{ name: 'Login' } as never],
+        });
+    }
     const renderModal = () => {
         return (
             <Modal
@@ -122,7 +139,7 @@ const Profile = ({
                     }}
                 >
                     <Image
-                        source={images.avatar}
+                        source={images.avatar2}
                         resizeMode="contain"
                         style={{
                             height: 90,
@@ -138,7 +155,7 @@ const Profile = ({
                             color: COLORS.black,
                         }}
                     >
-                        Fahmi Haecal
+                        {user?.name}
                     </Text>
                     <Text
                         style={{
@@ -147,7 +164,7 @@ const Profile = ({
                             color: 'gray',
                         }}
                     >
-                        Haecal78@gmail.com
+                        {user?.username}
                     </Text>
                     <TouchableOpacity
                         onPress={() => navigation.navigate('UpdateProfile')}
@@ -174,9 +191,20 @@ const Profile = ({
                         </Text>
                     </TouchableOpacity>
                 </View>
-                <CompleteProfileCard
+                {/* <CompleteProfileCard
                     onPress={() => navigation.navigate('CompletePersonal')}
-                />
+                /> */}
+                <View style={styles.qrContainer}>
+                    <Text style={{
+                        fontFamily: 'semiBold',
+                    }}>Student ID</Text>
+                    <QRCode
+                        value={user?.rollnumber}
+                        size={150}
+                        color="black"
+                        backgroundColor="white"
+                    />
+                </View>
 
                 <View
                     style={{
@@ -188,16 +216,21 @@ const Profile = ({
                         icon={icons.quality}
                         onPress={() => navigation.navigate('ListCertificate')}
                     />
-                    <MenuItem
+                    {/* <MenuItem
                         name="BarCodeScanner"
                         icon={icons.quality}
                         onPress={() => navigation.navigate('BarCodeScanner')}
-                    />
+                    /> */}
                     <MenuItem
+                        name="Feedback"
+                        icon={icons.quality}
+                        onPress={() => navigation.navigate('Feedback')}
+                    />
+                    {/* <MenuItem
                         name="History Transaction"
                         icon={icons.document2}
                         onPress={() => navigation.navigate('ListHistory')}
-                    />
+                    /> */}
                     <MenuItem
                         name="FAQ"
                         icon={icons.faq}
@@ -232,7 +265,7 @@ const Profile = ({
                 <MenuItem
                     name="Logout"
                     icon={icons.exit}
-                    onPress={() => console.log('Logout')}
+                    onPress={handleLogout}
                     iconStyle={{
                         tintColor: COLORS.red,
                     }}
@@ -267,5 +300,10 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.white,
         padding: 16,
     },
+    qrContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    }
 })
 export default Profile

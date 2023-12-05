@@ -1,39 +1,40 @@
 import {
-    View,
-    Text,
-    StyleSheet,
-    TouchableOpacity,
-    ScrollView,
-    Alert,
-} from 'react-native'
-import React, { useState, useReducer, useCallback, useEffect } from 'react'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { COLORS, SIZES, icons } from '../constants'
-import {
     AntDesign,
-    FontAwesome5,
-    MaterialCommunityIcons,
     Feather,
+    FontAwesome5
 } from '@expo/vector-icons'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useNavigation } from '@react-navigation/native'
+import axios, { AxiosError } from 'axios'
 import { StatusBar } from 'expo-status-bar'
+import React, { useCallback, useEffect, useReducer, useState } from 'react'
+import {
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import Button from '../components/Button'
+import Input from '../components/Input'
+import ToastItem from '../components/ToastItem'
+import { COLORS, SIZES, icons } from '../constants'
 import { validateInput } from '../utils/actions/formActions'
 import { reducer } from '../utils/reducers/formReducers'
-import Input from '../components/Input'
-import Button from '../components/Button'
-import SocialButton from '../components/SocialButton'
-import ToastItem from '../components/ToastItem'
 
 const isTestMode = true
 
 const initialState = {
     inputValues: {
-        fullName: isTestMode ? 'John Doe' : '',
+        userName: isTestMode ? 'John Doe' : '',
         email: isTestMode ? 'example@gmail.com' : '',
         password: isTestMode ? '**********' : '',
         confirmPassword: isTestMode ? '**********' : '',
     },
     inputValidities: {
-        fullName: false,
+        userName: false,
         email: false,
         password: false,
         confirmPassword: false,
@@ -44,18 +45,68 @@ const initialState = {
 const Register = ({
     navigation
 }: any) => {
-    const [error, setError] = useState()
+    const [error, setError] = useState<string | null>()
     const [isLoading, setIsLoading] = useState(false)
     const [formState, dispatchFormState] = useReducer(reducer, initialState)
     const [isSuccess, setIsSuccess] = useState(false)
+    const { reset } = useNavigation();
 
     const inputChangedHandler = useCallback(
-        (inputId: any, inputValue: any) => {
-            const result = validateInput(inputId, inputValue)
+        (inputId: any, inputValue: any, refInputValue?: any) => {
+            const result = validateInput(inputId, inputValue, refInputValue)
             dispatchFormState({ inputId, validationResult: result, inputValue })
         },
         [dispatchFormState]
     )
+    const handleUpdateProfile = async () => {
+        const username = formState.inputValues['userName'];
+        const password = formState.inputValues['password'];
+        setError(null);
+        try {
+            // Get the access token from AsyncStorage
+            const accessToken = await AsyncStorage.getItem('accessToken');
+            console.log(accessToken)
+            // Check if the access token exists
+            if (accessToken) {
+                // Create a config object with the Bearer token
+                const config = {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                    },
+                };
+
+                // Make a PUT request to update the user's profile
+                const response = await axios.put(
+                    'https://api.samsu-fpt.software/api/users/init', // Replace with your API endpoint
+                    {
+                        username,
+                        password,
+                    },
+                    config
+                );
+
+                // If the request is successful, navigate to the main screen
+                if (response.status === 201) {
+                    setIsSuccess(true);
+                    reset({
+                        index: 0,
+                        routes: [{ name: 'Main' }],
+                    });
+                } else {
+                    // Handle the error, e.g., show an error message
+
+                }
+            } else {
+                // Handle the case where there's no access token in AsyncStorage
+                // You might want to prompt the user to log in or take appropriate action.
+            }
+        } catch (error) {
+            console.error('Update profile request failed:', (error as AxiosError).response?.data);
+            const errorMessage = (error as AxiosError).response?.data;
+            setError((errorMessage as any).message);
+            // Handle errors related to AsyncStorage, Axios, or any other unexpected errors
+        }
+    };
 
     useEffect(() => {
         if (error) {
@@ -80,36 +131,29 @@ const Register = ({
                     />
                 )}
                 <View style={styles.headerContainer}>
-                    <Text style={styles.title}>Create Account</Text>
+                    <Text style={styles.title}>Update Account Information</Text>
                     <Text style={styles.subtitle}>
                         You must first create an account to be able to access
-                        the LearnConnect platform and be able to enjoy the
+                        the SamSu platform and be able to enjoy the
                         various available learning features.
                     </Text>
                 </View>
 
                 <View>
                     <Input
-                        id="fullName"
+                        id="userName"
                         onInputChanged={inputChangedHandler}
-                        errorText={formState.inputValidities['fullName']}
-                        placeholder="Full Name"
+                        autoCapitalize="none"
+                        errorText={formState.inputValidities['userName']}
+                        placeholder="UserName"
                         placeholderTextColor={COLORS.black}
                         iconPack={FontAwesome5}
                         icon="user"
                     />
                     <Input
-                        id="email"
-                        onInputChanged={inputChangedHandler}
-                        errorText={formState.inputValidities['email']}
-                        placeholder="Your Email"
-                        placeholderTextColor={COLORS.black}
-                        keyboardType="email-address"
-                        iconPack={MaterialCommunityIcons}
-                        icon="email-outline"
-                    />
-                    <Input
-                        onInputChanged={inputChangedHandler}
+                        onInputChanged={(inputId: any, inputValue: any) => {
+                            inputChangedHandler(inputId, inputValue, formState.inputValues.confirmPassword);
+                        }}
                         errorText={formState.inputValidities['password']}
                         autoCapitalize="none"
                         id="password"
@@ -120,10 +164,12 @@ const Register = ({
                         icon="lock"
                     />
                     <Input
-                        onInputChanged={inputChangedHandler}
-                        errorText={formState.inputValidities['passwordConfirm']}
+                        onInputChanged={(inputId: any, inputValue: any) => {
+                            inputChangedHandler(inputId, inputValue, formState.inputValues.password);
+                        }}
+                        errorText={formState.inputValidities['confirmPassword']}
                         autoCapitalize="none"
-                        id="passwordConfirm"
+                        id="confirmPassword"
                         placeholder="Confirm Password"
                         placeholderTextColor={COLORS.black}
                         secureTextEntry={true}
@@ -131,13 +177,11 @@ const Register = ({
                         icon="lock"
                     />
                     <Button
-                        title="Create Account"
+                        title="Update Account"
                         isLoading={isLoading}
                         filled
-                        onPress={() => {
-                            setIsSuccess(true)
-                            navigation.navigate('Login')
-                        }}
+                        onPress={handleUpdateProfile
+                        }
                         style={{ marginVertical: 10 }}
                     />
                     <Text style={styles.policy}>
@@ -145,11 +189,6 @@ const Register = ({
                         Conditions that apply.
                     </Text>
                     <View style={styles.separateLine} />
-                    <SocialButton
-                        name="Google"
-                        icon={icons.google}
-                        onPress={() => console.log('Login with google')}
-                    />
                 </View>
             </ScrollView>
         </SafeAreaView>

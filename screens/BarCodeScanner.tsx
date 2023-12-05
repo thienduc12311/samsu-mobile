@@ -2,19 +2,24 @@ import { Ionicons } from '@expo/vector-icons';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import Constants from 'expo-constants';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Dimensions, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Animated, Dimensions, Image, Modal, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { COLORS } from '../constants';
+import { get, post } from '../utils/helpers/api-helper';
 
 const deviceHeight = Dimensions.get('window').height;
 const deviceWidth = Dimensions.get('window').width;
-
+const dubUrl = 'https://cdn-icons-png.flaticon.com/512/3177/3177440.png';
 
 export default function SnyBarCodeScanner(props: any) {
-    const { onScan, onClose, children, navigation } = props;
+    const { onScan, onClose, children, navigation, route } = props;
+    const { eventId } = route.params
     const [screen, setScreen] = useState('scan');
     const [scanned, setScanned] = useState(false);
     const [sizeQrCode, setSizeQrCode] = useState({ width: 0, height: 0 });
     const lineAnim = useRef(new Animated.Value(0)).current;
-
+    const [modalVisible, setModalVisible] = useState(false);
+    const [userData, setUserData] = useState<any>(null);
+    const [checkInStudentId, setCheckInStudentId] = useState(null)
     const onLineLayout = (event: any) => {
         const { x, y, height, width } = event.nativeEvent.layout;
         setSizeQrCode({ width: width, height: height });
@@ -38,15 +43,78 @@ export default function SnyBarCodeScanner(props: any) {
         inputRange: [0, 1],
         outputRange: [0, sizeQrCode?.height],
     });
+    const handleCheckIn = async () => {
+        try {
+            const response = await post(`events/event/${eventId}/checkin/${checkInStudentId}`);
+            if (response.status === 200) {
+                const data = response.data;
+                if ((data as any).success) {
+                    Alert.alert('Success', `Successfully checked in for this studentId: ${checkInStudentId}!`, [
+                        {
+                            text: 'Ok',
+                            onPress: () => {
+                                // This function will be called when the user presses the 'OK' button in the alert
+                                setScanned(false);
+                                setModalVisible(false); // Show modal after scanning
 
-    const handleBarCodeScanned = ({
+                            },
+                        },
+                    ])
+                } else {
+                    Alert.alert('Fail', `${(response.data as any).message} studentId: ${checkInStudentId}!`, [
+                        {
+                            text: 'Ok',
+                            onPress: () => {
+                                // This function will be called when the user presses the 'OK' button in the alert
+                                setScanned(false);
+                                setModalVisible(false)
+                            },
+                        },
+                    ])
+                }
+            }
+        } catch (error) {
+            console.log(error);
+            Alert.alert('Error', `Student already checked in: ${checkInStudentId}!`, [
+                {
+                    text: 'Retry',
+                    onPress: () => {
+                        // This function will be called when the user presses the 'OK' button in the alert
+                        setScanned(false);
+                        setModalVisible(false)
+                    },
+                },
+            ])
+        }
+    }
+    const handleBarCodeScanned = async ({
         type,
         data
     }: any) => {
         onScan && onScan(data);
         setScanned(true);
-        // @ts-expect-error TS(2304): Cannot find name 'alert'.
-        alert(`Bar code with type ${type} and data ${data} has been scanned!`);
+        setCheckInStudentId(data);
+        try {
+            const userProfile = await get(`users/event/${eventId}/profile/${data}`)
+            if (userProfile.status === 200) {
+                console.log(userProfile.data);
+                setModalVisible(true); // Show modal after scanning
+                setUserData(userProfile.data);
+            } else {
+                Alert.alert('Error', 'StudentId not found!');
+            }
+        } catch (error) {
+            Alert.alert('Error', `StudentId: ${data} not found!`, [
+                {
+                    text: 'Retry',
+                    onPress: () => {
+                        // This function will be called when the user presses the 'OK' button in the alert
+                        setScanned(false);
+                    },
+                },
+            ])
+        }
+
     };
 
 
@@ -80,11 +148,45 @@ export default function SnyBarCodeScanner(props: any) {
             )) ||
                 (screen === 'data' && <View style={{ backgroundColor: 'white' }}>{children}</View>)}
             {/* Actions */}
-            <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.close}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.close}>
                 <View style={{ backgroundColor: 'rgba(0,0,0,.6)', width: 22, height: 22, alignItems: 'center', justifyContent: 'center', borderRadius: 13 }}>
                     <Ionicons name="ios-close" size={20} color="#fff" />
                 </View>
             </TouchableOpacity>
+            {/* Modal for displaying user profile data */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => {
+                    setModalVisible(false);
+                    setScanned(false);
+                }}
+            >
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                    <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 10, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 20, marginBottom: 20 }}>Student Profile</Text>
+                        {userData && (
+                            <View style={{ alignItems: 'center' }}>
+                                <Image source={{ uri: userData.avt ?? dubUrl }} style={{ width: 150, height: 150, marginBottom: 20 }} />
+                                <Text>Name: {userData.name}</Text>
+                                <Text>Roll Number: {userData.rollnumber}</Text>
+                            </View>
+                        )}
+                        <View style={{ flexDirection: 'row', marginTop: 20 }}>
+                            <TouchableOpacity onPress={() => {
+                                setModalVisible(false);
+                                setScanned(false);
+                            }} style={styles.cancelButton}>
+                                <Text style={{ color: 'white' }}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={handleCheckIn} style={styles.checkInButton}>
+                                <Text style={{ color: 'white' }}>Check In</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
             <View style={styles.bottomAction}>
                 <TouchableOpacity onPress={() => setScanned(false)}>
                     <View style={styles.bottomButtonAction}>
@@ -93,12 +195,12 @@ export default function SnyBarCodeScanner(props: any) {
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => setScreen('scan')}>
                     <View style={styles.bottomButtonAction}>
-                        <Text style={styles.bottomTextAction}>Quét mã</Text>
+                        <Text style={styles.bottomTextAction}>Scan</Text>
                     </View>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => setScreen('data')}>
                     <View style={styles.bottomButtonAction}>
-                        <Text style={styles.bottomTextAction}>Dữ liệu</Text>
+                        <Text style={styles.bottomTextAction}>Data</Text>
                     </View>
                 </TouchableOpacity>
 
@@ -211,8 +313,25 @@ const styles = StyleSheet.create({
     layerBottom: {
         flex: 1,
         backgroundColor: opacity,
+    }, checkInButton: {
+        flex: 1,
+        backgroundColor: COLORS.primary, // Green color for check-in
+        padding: 10,
+        borderRadius: 5,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginHorizontal: 5,
     },
-
+    cancelButton: {
+        flex: 1,
+        backgroundColor: COLORS.backTransparent, // Red color for cancel
+        padding: 10,
+        borderRadius: 5,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginHorizontal: 5,
+    }
+    ,
     // edge
     topLeftEdge: {
         position: 'absolute',

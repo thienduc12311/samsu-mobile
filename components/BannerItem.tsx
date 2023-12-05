@@ -1,18 +1,19 @@
-import { View, Text, Image, TouchableOpacity } from 'react-native'
-import React from 'react'
-import { LinearGradient } from 'expo-linear-gradient'
-import { COLORS, images } from '../constants'
+import React from 'react';
+import { ImageBackground, Text, TouchableOpacity, View } from 'react-native';
+import { COLORS } from '../constants';
 
-const BannerItem = () => {
+const BannerItem = ({
+    navigation
+}: any) => {
     return (
-        <LinearGradient
-            colors={['rgba(150,150,150,1)', 'rgba(217,217,217,1)']}
+        <ImageBackground
+            source={require('../assets/images/fptuni.jpeg')} // Replace 'images.bannerBackgroundImage' with your image source
             style={{
                 height: 144,
                 width: '100%',
-                backgroundColor: COLORS.primary,
-                borderRadius: 10,
+                borderRadius: 20,                
                 flexDirection: 'row',
+                overflow: 'hidden',
                 justifyContent: 'space-between',
             }}
         >
@@ -29,7 +30,6 @@ const BannerItem = () => {
                         fontFamily: 'medium',
                     }}
                 >
-                    50% Off
                 </Text>
                 <Text
                     style={{
@@ -38,7 +38,7 @@ const BannerItem = () => {
                         fontFamily: 'medium',
                     }}
                 >
-                    Take any course
+                    Take event tour now!
                 </Text>
 
                 <TouchableOpacity
@@ -51,6 +51,8 @@ const BannerItem = () => {
                         justifyContent: 'center',
                         marginVertical: 22,
                     }}
+                    onPress={() => navigation.navigate('MyLearning')}
+
                 >
                     <Text
                         style={{
@@ -64,19 +66,10 @@ const BannerItem = () => {
                 </TouchableOpacity>
             </View>
             <View>
-                <Image
-                    source={images.banner2}
-                    resizeMode="contain"
-                    style={{
-                        width: 216,
-                        height: 193,
-                        bottom: 49,
-                    }}
-                />
             </View>
             <View></View>
-        </LinearGradient>
-    )
-}
+        </ImageBackground>
+    );
+};
 
-export default BannerItem
+export default BannerItem;

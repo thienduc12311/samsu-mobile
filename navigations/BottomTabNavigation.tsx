@@ -1,8 +1,8 @@
-import { View, Text, Image } from 'react-native'
-import React from 'react'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
+import React from 'react'
+import { Image, Text, View } from 'react-native'
 import { COLORS, icons } from '../constants'
-import { Home, MyLearning, Bookmark, Profile } from '../screens'
+import { Bookmark, Home, MyLearning, Profile } from '../screens'
 
 const Tab = createBottomTabNavigator()
 
@@ -15,7 +15,7 @@ const screenOptions = {
         right: 0,
         left: 0,
         elevation: 0,
-        height: 60,
+        height: 80,
         background: COLORS.white,
     },
 }
@@ -58,7 +58,40 @@ const BottomTabNavigation = () => {
                     },
                 }}
             />
-
+            {/* <Tab.Screen
+                name="PublicEvent"
+                component={Bookmark}
+                options={{
+                    tabBarIcon: ({ focused }) => {
+                        return (
+                            <View style={{ alignItems: 'center' }}>
+                                <Image
+                                    source={icons.bookmark}
+                                    resizeMode="contain"
+                                    style={{
+                                        height: 24,
+                                        width: 24,
+                                        tintColor: focused
+                                            ? COLORS.primary
+                                            : COLORS.secondaryGray,
+                                    }}
+                                />
+                                <Text
+                                    style={{
+                                        fontSize: 12,
+                                        fontFamily: 'regular',
+                                        color: focused
+                                            ? COLORS.primary
+                                            : COLORS.secondaryGray,
+                                    }}
+                                >
+                                    Public Event
+                                </Text>
+                            </View>
+                        )
+                    },
+                }}
+            /> */}
             <Tab.Screen
                 name="MyLearning"
                 component={MyLearning}
@@ -86,7 +119,7 @@ const BottomTabNavigation = () => {
                                             : COLORS.secondaryGray,
                                     }}
                                 >
-                                    My Learning
+                                    Public Event
                                 </Text>
                             </View>
                         )
@@ -121,7 +154,7 @@ const BottomTabNavigation = () => {
                                             : COLORS.secondaryGray,
                                     }}
                                 >
-                                    Bookmark
+                                    Score
                                 </Text>
                             </View>
                         )

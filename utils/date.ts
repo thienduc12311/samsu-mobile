@@ -1,6 +1,13 @@
+
+import { DateTime } from 'luxon';
 // Helper function to convert a number to a string with leading zero if needed
 export function padNumber(num: any) {
     return num.toString().padStart(2, '0')
+}
+export function hasTimestampPassed(timestamp: any): boolean {
+    const currentDateTime = DateTime.now();
+    const targetDateTime = DateTime.fromMillis(timestamp);
+    return targetDateTime <= currentDateTime;
 }
 
 // Function to convert datePost to "time ago" format

@@ -1,13 +1,12 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native'
-import React, { useState, useRef } from 'react'
-import { COLORS, SIZES, icons } from '../constants'
-import { ScrollView } from 'react-native-virtualized-view'
 import { AntDesign, Feather } from '@expo/vector-icons'
+import React, { useRef, useState } from 'react'
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import RBSheet from 'react-native-raw-bottom-sheet'
+import { ScrollView } from 'react-native-virtualized-view'
+import Button from '../components/Button'
 import PaymentCard from '../components/PaymentCard'
 import SuccessModal from '../components/SuccessModal'
-import RBSheet from 'react-native-raw-bottom-sheet'
-import QRCode from 'react-native-qrcode-svg'
-import Button from '../components/Button'
+import { COLORS, SIZES, icons } from '../constants'
 
 const BuyMethodMidtrans = ({
     navigation

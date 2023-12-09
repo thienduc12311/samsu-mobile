@@ -35,6 +35,7 @@ import {
 import EventDetail from '../screens/EventDetail'
 import FeedbackAnswer from '../screens/FeedbackAnswer'
 import GradeTicketDetail from '../screens/GradeTicketDetails'
+import MyTasks from '../screens/MyTasks'
 import SubmitGradeTicket from '../screens/SubmitGradeTicket'
 import TaskDetails from '../screens/TaskDetails'
 import { get } from '../utils/helpers/api-helper'
@@ -123,6 +124,11 @@ const AppNavigation = () => {
                 <Stack.Screen
                     name="CompletePersonal"
                     component={CompletePersonal}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name="MyTasks"
+                    component={MyTasks}
                     options={{ headerShown: false }}
                 />
                 <Stack.Screen

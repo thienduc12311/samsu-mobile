@@ -1,10 +1,12 @@
-import { AntDesign, Feather, FontAwesome } from '@expo/vector-icons'
+import { AntDesign, Feather } from '@expo/vector-icons'
 import { useIsFocused } from '@react-navigation/native'
+import { DateTime } from 'luxon'
 import React, { useEffect, useState } from 'react'
 import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ScrollView } from 'react-native-virtualized-view'
-import { COLORS, SIZES, images } from '../constants'
+import Button from '../components/Button'
+import { COLORS, SIZES } from '../constants'
 import { get, put } from '../utils/helpers/api-helper'
 
 const TaskDetails = ({
@@ -15,6 +17,9 @@ const TaskDetails = ({
      */
 
     const { task } = route.params;
+    const taskDeadline = task.task.deadline ?? 1;
+    const date = DateTime.fromMillis(taskDeadline).setZone('Asia/Bangkok');
+
     const isFocused = useIsFocused();
     const [event, setEvent] = useState<any>();
     console.log(task);
@@ -27,6 +32,38 @@ const TaskDetails = ({
         }
         fetchEvent();
     }, [isFocused])
+    const getStatusColor = (status: number) => {
+        switch (status) {
+            case 1:
+                return COLORS.green
+            case 2:
+                return COLORS.red
+            case 3:
+                return COLORS.green
+            case 4:
+                return COLORS.green
+            case 5:
+                return COLORS.orange
+            default:
+                return COLORS.gray4
+        }
+    }
+    const getStatusText = (status: number) => {
+        switch (status) {
+            case 1:
+                return 'Accepted'
+            case 2:
+                return 'Rejected'
+            case 3:
+                return 'Completed'
+            case 4:
+                return 'Finished'
+            case 5:
+                return 'Did not finish'
+            default:
+                return 'Pending'
+        }
+    }
     const renderHeader = () => {
         return (
             <View
@@ -61,17 +98,27 @@ const TaskDetails = ({
     const handleAcceptTask = async (status: number) => {
         const response = await put(`tasks/${task.task.id}/assignee/${status}`)
         if (response.status === 200 && (response.data as any).success) {
-            Alert.alert(`Sucessfully ${status === 1 ? "accept" : "reject"} the task`)
+            Alert.alert(`Sucessfully ${getStatusText(status).toLowerCase()} the task`)
         }
     }
-    const getTaskStatus = (status: number): string => {
-        if (status === 1) return 'Accepted';
-        if (status === 2) return 'Rejected';
-        return 'Pending';
+    const renderCheckInButton = () => {
+        const isCheckedInTask = task?.task?.title?.toLowerCase().replace(/\s/g, '').includes('checkin');
+        console.log(isCheckedInTask)
+        return isCheckedInTask ? <>
+            <Text>So luong nguoi tham gia: {event?.participants.length}</Text>
+            <Button
+                title="Check in"
+                filled
+                onPress={() => navigation.navigate('BarCodeScanner', { eventId: event?.id })}
+                style={{
+                    height: 46,
+                    width: '100%',
+                }} />
+        </> : null
     }
+
     const renderContent = () => {
         const [isSaved, setIsSaved] = useState(false)
-
         return (
             <View
                 style={{
@@ -79,7 +126,7 @@ const TaskDetails = ({
                 }}
             >
                 <Image
-                    source={images.courseCover}
+                    source={{ uri: event?.bannerUrl }}
                     resizeMode="contain"
                     style={styles.cover}
                 />
@@ -91,17 +138,11 @@ const TaskDetails = ({
                     }}
                 >
                     <Text style={styles.title}>{task.task.title}</Text>
-                    <TouchableOpacity onPress={() => setIsSaved(!isSaved)}>
-                        <FontAwesome
-                            name={isSaved ? 'bookmark' : 'bookmark-o'}
-                            size={24}
-                            color={COLORS.black}
-                        />
-                    </TouchableOpacity>
                 </View>
-                <Text style={styles.subtitle}>Status: {getTaskStatus(task.status)}</Text>
-
+                <Text style={{ ...styles.subtitle, color: getStatusColor(task.status) }}>Status: {getStatusText(task.status)}</Text>
+                <Text style={styles.subtitle}>Deadline: {date.toFormat('HH:mm dd/MM/yyyy')}</Text>
                 <Text style={styles.subtitle}>{task.task.content}</Text>
+                {renderCheckInButton()}
                 <Text style={styles.subtitle}>Creator: {task.task.creator.name}</Text>
                 <Text style={styles.subtitle}>Score: {task.task.score}</Text>
                 <Text style={styles.subtitle}>Score description: {task.task.gradeSubCriteria.content}</Text>
@@ -127,7 +168,7 @@ const TaskDetails = ({
                             color: COLORS.primary,
                         }}
                     >
-                        View details
+                        Event details
                     </Text>
                 </TouchableOpacity>
 
@@ -183,10 +224,10 @@ const TaskDetails = ({
                     padding: 16,
                     flexDirection: 'row',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
+                    justifyContent: task.status !== 0 ? 'flex-end' : 'space-between',
                 }}
             >
-                <TouchableOpacity
+                {task.status === 0 && <TouchableOpacity
                     onPress={() => handleAcceptTask(2)}
                     style={{
                         width: 118,
@@ -194,7 +235,7 @@ const TaskDetails = ({
                         alignItems: 'center',
                         justifyContent: 'center',
                         borderRadius: 8,
-                        backgroundColor: COLORS.primary,
+                        backgroundColor: COLORS.red,
                     }}
                 >
                     <Text
@@ -206,16 +247,16 @@ const TaskDetails = ({
                     >
                         Reject
                     </Text>
-                </TouchableOpacity>
+                </TouchableOpacity>}
                 <TouchableOpacity
-                    onPress={() => handleAcceptTask(1)}
+                    onPress={() => handleAcceptTask(task.status === 0 ? 1 : 3)}
                     style={{
                         width: 118,
                         height: 36,
                         alignItems: 'center',
                         justifyContent: 'center',
                         borderRadius: 8,
-                        backgroundColor: COLORS.white,
+                        backgroundColor: COLORS.primary,
                         borderColor: COLORS.primary,
                         borderWidth: 1,
                     }}
@@ -224,10 +265,10 @@ const TaskDetails = ({
                         style={{
                             fontSize: 16,
                             fontFamily: 'medium',
-                            color: COLORS.primary,
+                            color: COLORS.white,
                         }}
                     >
-                        Accept Task
+                        {task.status === 0 ? 'Accept task' : 'Complete task'}
                     </Text>
                 </TouchableOpacity>
             </View>
@@ -255,6 +296,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.white,
         padding: 16,
+        marginBottom: 40
     },
     itemContainer: {
         flexDirection: 'row',

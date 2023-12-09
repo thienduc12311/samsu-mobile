@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { GoogleSignin } from '@react-native-google-signin/google-signin'
 import { useNavigation } from '@react-navigation/native'
 import React, { useState } from 'react'
 import {
@@ -23,6 +24,10 @@ const Profile = ({
     navigation
 }: any) => {
     const { state } = useAppContext();
+    GoogleSignin.configure({
+        scopes: ['profile', 'email'],
+        webClientId: '233487864072-ldpmp56m9cr11utl8ev17l94a5jf63h9.apps.googleusercontent.com',
+    });
 
     // Access the user property from the context state
     const { user } = state;
@@ -49,6 +54,7 @@ const Profile = ({
     }
     const handleLogout = async () => {
         await AsyncStorage.removeItem('accessToken');
+        await GoogleSignin.signOut();
         Alert.alert('', 'Logout successfully');
         reset({
             index: 0,
@@ -221,16 +227,16 @@ const Profile = ({
                         icon={icons.quality}
                         onPress={() => navigation.navigate('BarCodeScanner')}
                     /> */}
-                    <MenuItem
+                    {/* <MenuItem
                         name="Feedback"
                         icon={icons.quality}
                         onPress={() => navigation.navigate('Feedback')}
-                    />
-                    {/* <MenuItem
+                    /> */}
+                    <MenuItem
                         name="History Transaction"
                         icon={icons.document2}
                         onPress={() => navigation.navigate('ListHistory')}
-                    /> */}
+                    />
                     <MenuItem
                         name="FAQ"
                         icon={icons.faq}

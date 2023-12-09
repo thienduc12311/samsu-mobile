@@ -1,21 +1,52 @@
 import { Ionicons } from '@expo/vector-icons'
 import { DateTime } from 'luxon'
 import React from 'react'
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { isNumber } from 'validate.js'
-import { COLORS, SIZES, icons } from '../constants'
+import { COLORS, SIZES } from '../constants'
 
-const NotificationCard = ({
+const MyTaskCard = ({
     percentage,
     title,
     duration,
     deadline,
     onPress,
-    creator
+    status
 }: any) => {
     const timeDeadline = deadline ?? 1;
     const date = DateTime.fromMillis(timeDeadline).setZone('Asia/Bangkok');
-
+    const getStatusColor = (status: number) => {
+        switch (status) {
+            case 1:
+                return COLORS.green
+            case 2:
+                return COLORS.red
+            case 3:
+                return COLORS.green
+            case 4:
+                return COLORS.green
+            case 5:
+                return COLORS.orange
+            default:
+                return COLORS.gray4
+        }
+    }
+    const getStatusText = (status: number) => {
+        switch (status) {
+            case 1:
+                return 'Accepted'
+            case 2:
+                return 'Rejected'
+            case 3:
+                return 'Completed'
+            case 4:
+                return 'Finished'
+            case 5:
+                return 'Did not finish'
+            default:
+                return 'Pending'
+        }
+    }
     return (
         <TouchableOpacity onPress={onPress} style={styles.viewContainer}>
             <View style={styles.container}>
@@ -28,7 +59,7 @@ const NotificationCard = ({
                     {percentage == 100 ? (
                         <>
                             <Ionicons
-                                name="ios-checkmark"
+                                name="document-text"
                                 size={24}
                                 color={COLORS.black}
                             />
@@ -40,24 +71,32 @@ const NotificationCard = ({
                     )}
                     <View>
                         <Text style={styles.title}>{title}</Text>
-                        <Text style={styles.duration}>Description:{duration}</Text>
+                        <Text style={styles.duration}>{duration}</Text>
                         {isNumber(deadline) ? <Text style={styles.deadline}>Deadline: {date.toFormat('HH:mm dd/MM/yyyy')}</Text> : null}
                     </View>
                     <View>
-                        <Text style={styles.title}>Create by: {creator}</Text>
+                        <View
+                            style={{
+                                paddingVertical: 2,
+                                paddingHorizontal: 6,
+                                backgroundColor: getStatusColor(status),
+                                borderRadius: 6,
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                            }}
+                        >
+                            <Text
+                                style={{
+                                    fontSize: 11,
+                                    fontFamily: 'regular',
+                                    color: COLORS.white,
+                                }}
+                            >
+                                {getStatusText(status)}
+                            </Text>
+                        </View>
                     </View>
                 </View>
-                <TouchableOpacity>
-                    <Image
-                        source={icons.arrowRight}
-                        resizeMode="contain"
-                        style={{
-                            height: 20,
-                            width: 20,
-                            tintColor: COLORS.primary,
-                        }}
-                    />
-                </TouchableOpacity>
             </View>
         </TouchableOpacity>
     )
@@ -133,4 +172,4 @@ const styles = StyleSheet.create({
     },
 })
 
-export default NotificationCard
+export default MyTaskCard

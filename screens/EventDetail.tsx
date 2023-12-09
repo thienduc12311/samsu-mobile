@@ -145,7 +145,7 @@ const EventDetail = ({
                 <Text style={styles.subtitle}>Description</Text>
                 <View>
                     <HTML source={{ html: event?.content }} />
-                    {user?.role === 'ROLE_ADMIN' && <Button
+                    {['ROLE_ADMIN', 'ROLE_MANAGER', 'ROLE_STAFF'].includes((user as any).role as string) ? <Button
                         title="Check in"
                         filled
                         onPress={() => navigation.navigate('BarCodeScanner', { eventId: event?.id })}
@@ -153,7 +153,7 @@ const EventDetail = ({
                             height: 46,
                             width: '100%',
                         }}
-                    />}
+                    /> : null}
                 </View>
                 {/* <Text style={styles.subtitle}>Speaker: </Text>
 

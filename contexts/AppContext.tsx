@@ -1,5 +1,5 @@
 import React, { ReactNode, createContext, useContext, useReducer } from 'react';
-import { SET_USER } from './context-type';
+import { SET_MY_EVENT, SET_SEMESTERS, SET_USER } from './context-type';
 
 // Define the types for the context and state
 export interface User {
@@ -12,6 +12,9 @@ export interface User {
     department?: string;
     score?: number;
     attendedEvent?: number;
+}
+export interface Semester {
+    name: string
 }
 export enum RoleEnumNumber {
     ROLE_ADMIN = 0,
@@ -26,8 +29,10 @@ export enum Role {
     ROLE_STUDENT = 'ROLE_STUDENT',
 }
 type AppState = {
+    myEvents: any;
     user: null | User; // Replace 'any' with the actual type of your user data
     theme: 'light' | 'dark';
+    semesters: Semester[] | null;
 };
 
 type AppAction = {
@@ -46,7 +51,9 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 // Initial state for the context
 const initialState: AppState = {
     user: null,
+    myEvents: null,
     theme: 'light',
+    semesters: null
 };
 
 // Reducer function to update the state
@@ -54,6 +61,10 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
     switch (action.type) {
         case SET_USER:
             return { ...state, user: action.payload };
+        case SET_MY_EVENT:
+            return { ...state, myEvents: action.payload }
+        case SET_SEMESTERS:
+            return { ...state, semesters: action.payload }
         case 'TOGGLE_THEME':
             return { ...state, theme: state.theme === 'light' ? 'dark' : 'light' };
         default:

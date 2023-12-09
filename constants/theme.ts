@@ -16,7 +16,7 @@ export const COLORS = {
     gray6: '#EDEDED',
     gray7: '#F6F8FA',
     yellow: '#FFD27C',
-    orange: '#FFEBE4',
+    orange: '#D49137',
     green: '#059C6A',
     red: '#E04444',
     backTransparent: 'rgba(0,0,0,0.6)',

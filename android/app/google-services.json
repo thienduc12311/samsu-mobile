@@ -28,7 +28,8 @@
       "client_info": {
         "mobilesdk_app_id": "1:450496097546:android:7f4faea02cccb5202ddef3",
         "android_client_info": {
-          "package_name": "com.thienduc12311.SamSu"
+          "package_name": "com.thienduc12311.SamSu",
+          "certificate_hash": "a4c0c60c90b4a8377db72a019bfb50ae38eccb6e"
         }
       },
       "oauth_client": [],
@@ -39,7 +40,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "233487864072-j8o6enc5248stvra23mitrac1a9h0ois.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

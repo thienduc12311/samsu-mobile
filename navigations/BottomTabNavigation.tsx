@@ -3,6 +3,7 @@ import React from 'react'
 import { Image, Text, View } from 'react-native'
 import { COLORS, icons } from '../constants'
 import { Bookmark, Home, MyLearning, Profile } from '../screens'
+import MyTasks from '../screens/MyTasks'
 
 const Tab = createBottomTabNavigator()
 
@@ -15,7 +16,7 @@ const screenOptions = {
         right: 0,
         left: 0,
         elevation: 0,
-        height: 80,
+        height: 60,
         background: COLORS.white,
     },
 }
@@ -58,9 +59,9 @@ const BottomTabNavigation = () => {
                     },
                 }}
             />
-            {/* <Tab.Screen
-                name="PublicEvent"
-                component={Bookmark}
+            <Tab.Screen
+                name="MyTasks"
+                component={MyTasks}
                 options={{
                     tabBarIcon: ({ focused }) => {
                         return (
@@ -85,13 +86,13 @@ const BottomTabNavigation = () => {
                                             : COLORS.secondaryGray,
                                     }}
                                 >
-                                    Public Event
+                                    My Task
                                 </Text>
                             </View>
                         )
                     },
                 }}
-            /> */}
+            />
             <Tab.Screen
                 name="MyLearning"
                 component={MyLearning}
@@ -154,7 +155,7 @@ const BottomTabNavigation = () => {
                                             : COLORS.secondaryGray,
                                     }}
                                 >
-                                    Score
+                                    Ticket
                                 </Text>
                             </View>
                         )

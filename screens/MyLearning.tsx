@@ -3,15 +3,17 @@ import React, { useEffect, useState } from 'react'
 import {
     ActivityIndicator,
     FlatList,
+    Image,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ScrollView } from 'react-native-virtualized-view'
 import MyLearningCard from '../components/MyLearningCard'
-import { COLORS } from '../constants'
+import { COLORS, FONTS, icons } from '../constants'
 import { useAppContext } from '../contexts/AppContext'
 import { get } from '../utils/helpers/api-helper'
 import { isParticipated } from '../utils/helpers/event-helper'
@@ -65,6 +67,86 @@ const MyLearning = ({
             </View>
         )
     }
+    const renderSearchBar = () => {
+
+        return (
+            <View>
+                <View
+                    style={{
+                        marginVertical: 3,
+                    }}
+                >
+                    <Text
+                        style={{
+                            ...FONTS.h3,
+                            color: COLORS.black,
+                        }}
+                    >
+                        Find a your event
+                    </Text>
+                    <Text
+                        style={{
+                            ...FONTS.h2,
+                            color: COLORS.black,
+                        }}
+                    >
+
+                    </Text>
+                </View>
+                <View
+                    style={{
+                        height: 55,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        width: '100%',
+                        // @ts-expect-error TS(2339): Property 'tertiary' does not exist on type '{ prim... Remove this comment to see the full error message
+                        backgroundColor: COLORS.tertiary,
+                        flexDirection: 'row',
+                        borderRadius: 8,
+                        marginBottom: 16,
+                        borderColor: COLORS.gray6,
+                        borderWidth: 1,
+                        // @ts-expect-error TS(1117): An object literal cannot have multiple properties ... Remove this comment to see the full error message
+                        borderRadius: 8,
+                        shadowColor: 'rgba(255, 255, 255, 0.1)',
+                        shadowOffset: {
+                            width: 0,
+                            height: 0,
+                        },
+                        shadowOpacity: 1,
+                        shadowRadius: 10,
+                        elevation: 1, // This is for Android shadow
+                    }}
+                >
+                    <TextInput
+                        placeholder="Search event here..."
+                        // @ts-expect-error TS(2339): Property 'secondary' does not exist on type '{ pri... Remove this comment to see the full error message
+                        placeholderTextColor={COLORS.secondary}
+                        value={search}
+                        onChangeText={(text) => setSearch(text)}
+                        style={{
+                            fontSize: 14,
+                            paddingHorizontal: 12,
+                            flex: 1,
+                        }}
+                    />
+                    <TouchableOpacity onPress={() => console.log('Search')}>
+                        <Image
+                            source={icons.search}
+                            resizeMode="contain"
+                            style={{
+                                height: 24,
+                                // @ts-expect-error TS(1117): An object literal cannot have multiple properties ... Remove this comment to see the full error message
+                                height: 24,
+                                // @ts-expect-error TS(2339): Property 'secondary' does not exist on type '{ pri... Remove this comment to see the full error message
+                                tintColor: COLORS.secondary,
+                            }}
+                        />
+                    </TouchableOpacity>
+                </View>
+            </View>
+        )
+    }
 
     /**
      * Render content
@@ -77,7 +159,6 @@ const MyLearning = ({
                     marginBottom: 64,
                 }}
             >
-                <Text style={styles.subtitle}>Events:</Text>
                 <FlatList
                     data={events} // Render only the first three elements
                     keyExtractor={(item) => item.id}
@@ -94,7 +175,7 @@ const MyLearning = ({
                     )}
                 />
                 <TouchableOpacity
-                    onPress={() => navigation.navigate('MyLearningCourse')}
+                    onPress={() => console.log('haha')}
                 >
                     <Text
                         style={{
@@ -144,6 +225,7 @@ const MyLearning = ({
         <SafeAreaView style={styles.area}>
             <View style={styles.container}>
                 {renderHeader()}
+                {renderSearchBar()}
                 <ScrollView showsVerticalScrollIndicator={false}>
                     {loading ? (
                         // Render a loading spinner while fetching data

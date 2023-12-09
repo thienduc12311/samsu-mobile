@@ -1,39 +1,91 @@
-import { Ionicons } from '@expo/vector-icons'
 import { useIsFocused } from '@react-navigation/native'
 import React, { useEffect, useState } from 'react'
-import { FlatList, Image, RefreshControl, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native'
+import {
+    ActivityIndicator,
+    FlatList,
+    Image,
+    RefreshControl,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+    useWindowDimensions
+} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ScrollView } from 'react-native-virtualized-view'
-import BookmarkItem from '../components/BookmarkItem'
 import KeywordItem from '../components/KeywordItem'
+import MyTaskCard from '../components/MyTaskCard'
 import { COLORS, FONTS, icons } from '../constants'
 import { get } from '../utils/helpers/api-helper'
-
 export const STATUS = [
     { id: '0', keyword: 'All', status: -1 },
-    { id: '1', keyword: 'Pending', status: 0 },
-    { id: '2', keyword: 'Approved', status: 1 },
+    { id: '1', keyword: 'Accepted', status: 1 },
+    { id: '2', keyword: 'Pending', status: 0 },
     { id: '3', keyword: 'Rejected', status: 2 },
+    { id: '4', keyword: 'Completed', status: 3 },
+    { id: '5', keyword: 'Finished', status: 4 },
+    { id: '6', keyword: 'Did not finish', status: 5 },
+    { id: '7', keyword: 'Expired', status: 6 },
 ]
 
-const Bookmark = ({
+const MyTasks = ({
     navigation
 }: any) => {
     /***
      * Render header
+    * Render header
      */
     const windowDimensions = useWindowDimensions();
     const [refreshing, setRefreshing] = useState(false);
     const isFocused = useIsFocused();
 
     const [loading, setLoading] = useState(true); // Loading state
-    const [tickets, setTickets] = useState([]);
+    const [myTasks, setMyTasks] = useState<any[]>([]);
+    const [selectedKeywords, setSelectedKeywords] = useState<number[]>([-1]); // No default status
+    const [filteredTasks, setFilteredTasks] = useState<any[]>(myTasks);
+
+    const searchTasks = (query: string) => {
+        const lowerCaseQuery = query.toLowerCase();
+        const tasksToFilter = myTasks;
+
+        const filterByTitle = (task: any) => task.task.title.toLowerCase().includes(lowerCaseQuery);
+        const filterByStatus = (task: any) => selectedKeywords.length === 0 || selectedKeywords.includes(task.status);
+
+        const filtered = selectedKeywords[0] !== -1
+            ? tasksToFilter.filter((task) => filterByTitle(task) && filterByStatus(task))
+            : tasksToFilter.filter(filterByTitle);
+
+        setFilteredTasks(filtered);
+    };
+
+    const applyStatusFilter = (id: number) => {
+        if (selectedKeywords.length === 1 && id === -1) {
+            // "All" status selected, skip status filter
+            const filtered = myTasks.filter((task) =>
+                task.task.title.toLowerCase().includes(search.toLowerCase())
+            );
+            setFilteredTasks(filtered);
+        } else {
+            // Apply both search and status filters
+            const tasks = myTasks;
+            const filtered = tasks.filter((task) =>
+                task.task.title.toLowerCase().includes(search.toLowerCase()) && id === task.status
+            );
+            setFilteredTasks(filtered);
+        }
+    };
+    const handleKeywordPress = (id: number) => {
+        setSelectedKeywords([id]);
+        applyStatusFilter(id);
+    };
+
     const fetchData = async () => {
         try {
-            const response = await get('/gradeTicket');
+            const response = await get('/tasks/me');
             if (response.status === 200) {
-                setTickets((response.data as any).content);
-                console.log(response.data);
+                setMyTasks((response.data as any).content);
+                setFilteredTasks((response.data as any).content);
             }
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -55,13 +107,6 @@ const Bookmark = ({
     }, [isFocused]);
     const [search, setSearch] = useState('')
 
-    const [image, setImage] = useState(null);
-    const getBlob = async (fileUri: any) => {
-        const resp = await fetch(fileUri);
-        const imageBody = await resp.blob();
-        return imageBody;
-    };
-
     const renderSearchBar = () => {
 
         return (
@@ -77,7 +122,7 @@ const Bookmark = ({
                             color: COLORS.black,
                         }}
                     >
-                        Find a your ticket
+                        Find a your task
                     </Text>
                     <Text
                         style={{
@@ -118,7 +163,10 @@ const Bookmark = ({
                         // @ts-expect-error TS(2339): Property 'secondary' does not exist on type '{ pri... Remove this comment to see the full error message
                         placeholderTextColor={COLORS.secondary}
                         value={search}
-                        onChangeText={(text) => setSearch(text)}
+                        onChangeText={(text) => {
+                            setSearch(text);
+                            searchTasks(text);
+                        }}
                         style={{
                             fontSize: 14,
                             paddingHorizontal: 12,
@@ -153,7 +201,7 @@ const Bookmark = ({
                         color: COLORS.black,
                     }}
                 >
-                    Grade ticket
+                    My Tasks
                 </Text>
             </View>
         )
@@ -164,22 +212,6 @@ const Bookmark = ({
      */
 
     const renderKeywords = () => {
-        const [selectedKeywords, setSelectedKeywords] = useState([])
-        const handleKeywordPress = (id: any) => {
-            // @ts-expect-error TS(2345): Argument of type '(prevSelectedKeywords: never[]) ... Remove this comment to see the full error message
-            setSelectedKeywords((prevSelectedKeywords) => {
-                // @ts-expect-error TS(2345): Argument of type 'any' is not assignable to parame... Remove this comment to see the full error message
-                if (prevSelectedKeywords.includes(id)) {
-                    // Remove keyword from the selection if already selected
-                    return prevSelectedKeywords.filter(
-                        (keywordId) => keywordId !== id
-                    )
-                } else {
-                    // Add keyword to the selection if not already selected
-                    return [...prevSelectedKeywords, id]
-                }
-            })
-        }
 
         return (
             <View style={{ marginVertical: 12 }}>
@@ -191,13 +223,11 @@ const Bookmark = ({
                     renderItem={({ item }) => (
                         <KeywordItem
                             item={item}
-                            onPress={handleKeywordPress}
-                            // @ts-expect-error TS(2345): Argument of type 'string' is not assignable to par... Remove this comment to see the full error message
-                            selected={selectedKeywords.includes(item.id)}
+                            onPress={() => handleKeywordPress(item.status)}
+                            selected={selectedKeywords.includes((item as any).status)}
                         />
                     )}
                 />
-                {image && <Image source={{ uri: image }} style={{ width: 200, height: 200 }} />}
             </View>
         )
     }
@@ -207,20 +237,33 @@ const Bookmark = ({
      */
 
     const renderContent = () => {
+        if (loading) {
+            // Render a loading spinner
+            return (
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                </View>
+            );
+        }
         return (
             <View>
                 <FlatList
-                    data={tickets}
+                    data={filteredTasks} // Use filteredTasks only when search is not empty
                     showsHorizontalScrollIndicator={false}
-                    keyExtractor={(item) => (item as any).id}
+                    keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
-                        <BookmarkItem
-                            title={(item as any).title}
-                            subtitle={(item as any).content}
-                            status={(item as any).status}
-                            onPress={() => navigation.navigate('GradeTicketDetail', { ticket: item })}
+                        <MyTaskCard
+                            percentage={100}
+                            title={item.task.title}
+                            deadline={item.task.deadline}
+                            duration={item.task.content}
+                            status={item.status}
+                            onPress={() =>
+                                navigation.navigate('TaskDetails', { task: item })
+                            }
                         />
                     )}
+                    contentContainerStyle={{ marginBottom: 40 }} // Add some padding to the bottom
                 />
             </View>
         )
@@ -237,21 +280,6 @@ const Bookmark = ({
                         onRefresh={onRefresh}
                     />
                 }>{renderContent()}</ScrollView>
-                <TouchableOpacity
-                    style={{
-                        position: 'absolute',
-                        top: 16,
-                        right: 16,
-                        padding: 10,
-                    }}
-                    onPress={() => navigation.navigate('SubmitGradeTicket')}
-                >
-                    <Ionicons
-                        name="add-circle"
-                        size={24}
-                        color={COLORS.primary}
-                    />
-                </TouchableOpacity>
             </View>
         </SafeAreaView>
     )
@@ -266,6 +294,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.white,
         padding: 16,
+        marginBottom: 60
     },
 })
-export default Bookmark
+export default MyTasks

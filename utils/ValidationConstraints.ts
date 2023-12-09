@@ -107,3 +107,11 @@ export const validateExpiryDate = (id: any, value: any) => {
     const validationResult = validate({ [id]: value }, { [id]: constraints })
     return validationResult && validationResult[id]
 }
+
+export const isValidEmail = (email: string) => {
+    // Regular expression for a simple email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    // Test the email against the regex pattern
+    return emailRegex.test(email);
+};

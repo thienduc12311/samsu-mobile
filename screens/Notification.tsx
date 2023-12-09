@@ -62,7 +62,9 @@ const Notification = ({
      */
     const renderContent = () => {
         return (
-            <View>
+            <View style={{
+                marginVertical: 4
+            }}>
                 <Text style={styles.subtitle}>This Week</Text>
                 <FlatList
                     data={myTasks}
@@ -73,7 +75,9 @@ const Notification = ({
                             <NotificationCard
                                 percentage={100}
                                 title={item.task.title}
+                                deadline={item.task.deadline}
                                 duration={item.task.content}
+                                creator={item.task.creator.name}
                                 onPress={() =>
                                     navigation.navigate('TaskDetails', { task: item })
                                 }
@@ -81,6 +85,7 @@ const Notification = ({
                         )
                     }}
                 />
+                {myTasks.length === 0 ? <Text>Khong co du lieu</Text> : null}
                 {/* <Text style={styles.subtitle}>This Week</Text>
                 <FlatList
                     data={notifications}

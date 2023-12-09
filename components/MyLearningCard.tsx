@@ -4,6 +4,7 @@ import React from 'react'
 import { Image, Text, TouchableOpacity, View } from 'react-native'
 import HTML from 'react-native-render-html'
 import { COLORS } from '../constants'
+import { hasTimestampPassed } from '../utils/date'
 import { stripHtmlTags } from '../utils/helpers/event-helper'
 
 const MyLearningCard = ({
@@ -23,6 +24,7 @@ const MyLearningCard = ({
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                marginVertical: 4
             }}
         >
             <Image
@@ -41,7 +43,26 @@ const MyLearningCard = ({
                         justifyContent: 'space-between',
                     }}
                 >
-                    <View
+                    {hasTimestampPassed(eventStartTimestamp) ? <View
+                        style={{
+                            paddingVertical: 2,
+                            paddingHorizontal: 6,
+                            backgroundColor: COLORS.orange,
+                            borderRadius: 6,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                        }}
+                    >
+                        <Text
+                            style={{
+                                fontSize: 11,
+                                fontFamily: 'regular',
+                                color: COLORS.white,
+                            }}
+                        >
+                            {'Finished'}
+                        </Text>
+                    </View> : <View
                         style={{
                             paddingVertical: 2,
                             paddingHorizontal: 6,
@@ -61,7 +82,7 @@ const MyLearningCard = ({
                         >
                             {type ? 'Registered' : 'Not Register'}
                         </Text>
-                    </View>
+                    </View>}
                     <View
                         style={{
                             flexDirection: 'row',

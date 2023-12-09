@@ -13,60 +13,68 @@ import {
 import CircularProgress from 'react-native-circular-progress-indicator'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ScrollView } from 'react-native-virtualized-view'
+import { isNumber } from 'validate.js'
 import BannerItem from '../components/BannerItem'
-import BootcampCard from '../components/BootcampCard'
 import CourseCard from '../components/CourseCard'
-import KeywordItem from '../components/KeywordItem'
 import { COLORS, FONTS, icons, images } from '../constants'
 import { useAppContext } from '../contexts/AppContext'
-import { bootcamps, keywordsData } from '../data/utils'
+import { SET_MY_EVENT } from '../contexts/context-type'
 import { hasTimestampPassed } from '../utils/date'
 import { get } from '../utils/helpers/api-helper'
 
 const Home = ({
-    navigation
+    navigation, route
 }: any) => {
     /**
      * Render Home header
      */
-    const { state } = useAppContext();
+    const { state, dispatch } = useAppContext();
     const { user } = state;
     const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
     const [myTasks, setMyTasks] = useState<any[]>([]);
-
+    const [pendingTasks, setPendingTasks] = useState<any[]>([]);
     const [pastEvents, setPastEvents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true); // Loading state
     const [search, setSearch] = useState('')
     const [selectedKeywords, setSelectedKeywords] = useState<any[]>([])
     const isFocused = useIsFocused();
 
-    useEffect(() => {
+    // Use the useFocusEffect hook to reload data when the screen is focused
+    // useFocusEffect(
+    //     useCallback(() => {
+    //         // Fetch data or perform any actions needed when the screen is focused
+    //         fetchData();
+    //     }, [])
+    // );
+    useEffect(() => {       
+        fetchData();
+    }, [isFocused]);
+    const fetchData = async () => {
         let upcomingEvents: any[] = [];
         let pastEvents: any[] = [];
-        // Simulate fetching questions from an API 
-        const fetchData = async () => {
-            try {
-                const [eventsResponse, tasksResponse] = await Promise.all([get('/events/me'), get('/tasks/me')]);
-
-                if (eventsResponse.status === 200) {
-                    const events = (eventsResponse.data as any).content;
-                    upcomingEvents = (events as any[]).filter((event) => !hasTimestampPassed(event.startTime));
-                    pastEvents = (events as any[]).filter((event) => hasTimestampPassed(event.startTime));
-                    setUpcomingEvents(upcomingEvents);
-                    setPastEvents(pastEvents);
-                }
-                if (tasksResponse.status === 200) {
-                    setMyTasks((tasksResponse.data as any).content);
-                }
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            } finally {
-                setLoading(false); // Set loading to false once the data is fetched or an error occurs
+        try {
+            const [eventsResponse, tasksResponse] = await Promise.all([get('/events/me'), get('/tasks/me')]);
+            if (eventsResponse.status === 200) {
+                const events = (eventsResponse.data as any).content;
+                upcomingEvents = (events as any[]).filter((event) => !hasTimestampPassed(event.startTime));
+                pastEvents = (events as any[]).filter((event) => hasTimestampPassed(event.startTime));
+                setUpcomingEvents(upcomingEvents);
+                setPastEvents(pastEvents);
+                dispatch({ type: SET_MY_EVENT, payload: events })
             }
-        };
-
-        fetchData();
-    }, [isFocused]); 
+            if (tasksResponse.status === 200) {
+                setMyTasks((tasksResponse.data as any).content);
+                setPendingTasks(filterPendingTask((tasksResponse.data as any).content));
+            }
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const filterPendingTask = (tasks: any[]) => {
+        return tasks.filter((task) => task.status === 0 && (isNumber(task.task.deadline) && !hasTimestampPassed(task.task.deadline)));
+    }
     const renderHeader = () => {
         return (
             <View>
@@ -100,7 +108,10 @@ const Home = ({
                         </TouchableOpacity>
                     </View>
                     <TouchableOpacity
-                        onPress={() => navigation.navigate('Notification', { myTasks })}
+                        style={{
+                            position: 'relative', marginRight: 16,
+                        }}
+                        onPress={() => navigation.navigate('Notification', { myTasks: pendingTasks })}
                     >
                         <Image
                             source={icons.bell}
@@ -111,6 +122,11 @@ const Home = ({
                                 tintColor: COLORS.black,
                             }}
                         />
+                        {pendingTasks.length > 0 && (
+                            <View style={styles.badge}>
+                                <Text style={styles.badgeText}>{pendingTasks.length}</Text>
+                            </View>
+                        )}
                     </TouchableOpacity>
                 </View>
             </View>
@@ -222,7 +238,7 @@ const Home = ({
         }
         return (
             <View style={{ marginVertical: 12 }}>
-                <FlatList
+                {/* <FlatList
                     data={keywordsData}
                     horizontal
                     showsHorizontalScrollIndicator={false}
@@ -234,7 +250,7 @@ const Home = ({
                             selected={selectedKeywords.includes(item.id)}
                         />
                     )}
-                />
+                /> */}
             </View>
         )
     }
@@ -298,7 +314,7 @@ const Home = ({
                             name={(item as any).title}
                             startDate={(item as any).startTime}
                             numStudents={(item as any).participants.length}
-                            onPress={() => navigation.navigate('Detail')}
+                            onPress={() => navigation.navigate('EventDetail', { event: item })}
                         />
                     )}
                 />
@@ -414,7 +430,7 @@ const Home = ({
                             </View>
                         </View>
 
-                        {user?.score && <View style={styles.progressContainer}>
+                        {user?.score ? <View style={styles.progressContainer}>
                             <CircularProgress
                                 value={user?.score}
                                 radius={50}
@@ -423,7 +439,7 @@ const Home = ({
                                 activeStrokeColor="#4CAF50" // Green color for active progress
                                 inActiveStrokeColor="#ddd" // Gray color for inactive progress
                             />
-                        </View>}
+                        </View> : null}
 
                     </View>
 
@@ -436,62 +452,6 @@ const Home = ({
     /**
      * Render Bootcamp
      */
-
-    const renderBootcamps = () => {
-        return (
-            <View
-                style={{
-                    marginBottom: 60,
-                    marginTop: 12,
-                }}
-            >
-                <View
-                    style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: 12,
-                    }}
-                >
-                    <Text
-                        style={{
-                            fontFamily: 'semiBold',
-                            fontSize: 18,
-                            color: COLORS.black,
-                        }}
-                    >
-                        Bootcamp
-                    </Text>
-                    <TouchableOpacity>
-                        <Text
-                            style={{
-                                fontFamily: 'medium',
-                                fontSize: 14,
-                                color: COLORS.gray5,
-                            }}
-                        >
-                            See All
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-                <FlatList
-                    data={bootcamps}
-                    keyExtractor={(item) => item.id}
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    renderItem={({ item }) => (
-                        <BootcampCard
-                            image={item.image}
-                            name={item.name}
-                            price={item.price}
-                            numStudents={item.numStudents}
-                            onPress={() => navigation.navigate('Detail')}
-                        />
-                    )}
-                />
-            </View>
-        )
-    }
     return (
         <SafeAreaView style={styles.area}>
             <View style={styles.container}>
@@ -507,7 +467,7 @@ const Home = ({
                                 {renderBanners()}
                                 {renderKeywords()}
                             {renderScore()}
-                            {renderUpcomingEvents()}
+                                {renderUpcomingEvents()}
                             {renderPastEvents()}
                         </>
                     )}
@@ -526,6 +486,7 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: COLORS.white,
         padding: 12,
+        marginBottom: 40
     },
     header: {
         flexDirection: 'row',
@@ -558,6 +519,21 @@ const styles = StyleSheet.create({
     },
     progressContainer: {
         alignItems: 'center',
+    },
+    badge: {
+        position: 'absolute',
+        top: -10,
+        right: -5,
+        backgroundColor: COLORS.red,
+        borderRadius: 10,
+        paddingVertical: 2,
+        paddingHorizontal: 6,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    badgeText: {
+        color: COLORS.white,
+        fontSize: 12,
     },
 })
 

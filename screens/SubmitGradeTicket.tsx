@@ -1,102 +1,113 @@
-import { AntDesign, Feather } from '@expo/vector-icons'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import axios from 'axios'
-import * as ImagePicker from 'expo-image-picker'
-import React, { useCallback, useState } from 'react'
-import { Alert, Button, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { ScrollView } from 'react-native-virtualized-view'
-import { COLORS } from '../constants'
-import { post } from '../utils/helpers/api-helper'
+import { AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import axios from 'axios';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useCallback, useReducer, useState } from 'react';
+import { Alert, Button, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import DropDownPicker from 'react-native-dropdown-picker';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { Checkbox } from 'react-native-paper';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Input from '../components/Input';
+import { COLORS } from '../constants';
+import { useAppContext } from '../contexts/AppContext';
+import { isValidEmail } from '../utils/ValidationConstraints';
+import { validateInput } from '../utils/actions/formActions';
+import { post } from '../utils/helpers/api-helper';
+import { reducer } from '../utils/reducers/formReducers';
 const preSignedUrlEndpoint = 'https://upload.samsu-fpt.software/presigned-url';
+
+
 const initialState = {
     inputValues: {
         email: '',
-        password: '',
+        title: '',
+        content: '',
     },
     inputValidities: {
         email: false,
         password: false,
+        title: '',
+        content: ''
     },
     formIsValid: false,
 }
-const SubmitGradeTicket = ({
-    navigation
-}: any) => {
+const data = [
+    { label: 'Event 1', value: 'event1' },
+    { label: 'Event 2', value: 'event2' },
+    { label: 'Event 3', value: 'event3' },
+    // Add your dropdown options here
+];
+const SubmitGradeTicket = () => {
     /***
      * Render header
      */
+    const navigation = useNavigation();
+    const [formState, dispatchFormState] = useReducer(reducer, initialState)
+    const { state, dispatch } = useAppContext();
+    const { myEvents, semesters } = state;
+    const data = myEvents.map((event: any) => {
+        return { label: event.title, value: event.id }
+    })
+    const semestersData = semesters?.map((semester) => { return { label: semester.name, value: semester.name } })
+    const [isEvent, setIsEvent] = useState(false);
+    const [isOther, setIsOther] = useState(false);
+    const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+    const [open, setOpen] = useState(false);
+    const [isSemesterOpen, setSemesterOpen] = useState(false);
+
+    const [selectedEventId, setEventId] = useState(null);
+    const [selectedSemester, setSelectedSemester] = useState('FA23');
+
+    const [items, setItems] = useState([
+        { label: 'Apple', value: 'apple' },
+        { label: 'Banana', value: 'banana' }
+    ]);
+    const handleEventCheckboxChange = useCallback(() => {
+        setIsEvent(!isEvent);
+        setShowSearchDropdown(!showSearchDropdown); // Show the dropdown when the "Event" checkbox is selected
+    }, [isEvent, showSearchDropdown]);
+
+    const handleOtherCheckboxChange = useCallback(() => {
+        setIsOther(!isOther);
+        setShowSearchDropdown(false); // Hide the dropdown when the "Other" checkbox is selected
+    }, [isOther]);
+
+
     const handleSubmit = async () => {
         // Add your logic to handle the submission
-        console.log('Title:', title);
-        console.log('Content:', content);
-        console.log('Image URL:', imageUrl);
+        const title = formState.inputValues['title'];
+        const content = formState.inputValues['content'];
+        const email = formState.inputValues['email'];
+        const eventId = isEvent ? selectedEventId : null;
+        console.log(eventId);
         if (title.length <= 0 || content.length <= 0 || imageUrl.length <= 0) {
             Alert.alert('Error', 'Title, Content and attachment must not be null!');
             return;
         }
-        const response = await post('/gradeTicket', { title, content, evidenceUrls: imageUrl });
-        if (response.status === 201) {
-            Alert.alert('Success', 'Successfully created a ticket!');
-            navigation.navigate('Bookmark')
-        } else {
-            Alert.alert('Failed', 'Failed to created a ticket!');
-            navigation.navigate('Bookmark')
+
+        if (isOther && !isValidEmail(email)) {
+            Alert.alert('Error', 'Email is not valid');
+            return;
         }
+        try {
+            const response = await post('/gradeTicket', { title, content, evidenceUrls: imageUrl, eventId, guarantorEmail: email, semesterName: selectedSemester });
+            if (response.status === 201) {
+                Alert.alert('Success', 'Successfully created a ticket!');
+                navigation.goBack()
+            } else {
+                Alert.alert('Failed', 'Failed to created a ticket!');
+                navigation.goBack()
+            }
+        } catch (error: any) {
+            console.log(error.response)
+        }
+
     };
     const [image, setImage] = useState(null);
     const [imageUrl, setImageUrl] = useState('');
-    // const [title, setTitle] = useState('')
-    // const [content, setContent] = useState('')
-    // const [formState, dispatchFormState] = useReducer(reducer, initialState)
 
-    // const inputChangedHandler = useCallback(
-    //     (inputId: any, inputValue: any) => {
-    //         const result = validateInput(inputId, inputValue)
-    //         dispatchFormState({ inputId, validationResult: result, inputValue })
-    //     },
-    //     [dispatchFormState]
-    // )
-    let title = ''; // Remove the useState
-    let content = ''; // Remove the useState
-
-    const handleTitleChange = useCallback((text: string) => {
-        title = text; // Directly update the variable
-    }, []);
-
-    const handleContentChange = useCallback((text: string) => {
-        content = text; // Directly update the variable
-    }, []);
-    const takePhoto = async () => {
-        let result = await ImagePicker.launchCameraAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 1,
-        });
-        if (result.canceled) {
-            // If the user cancels, do nothing
-            return;
-        }
-
-        setImage((result as any).uri);
-        handleImageUpload(result.assets[0]?.uri);
-    };
-    const pickImage = async () => {
-        // No permissions request is necessary for launching the image library
-        let result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ImagePicker.MediaTypeOptions.All,
-            allowsEditing: true,
-            aspect: [4, 3],
-            quality: 1,
-        });
-
-
-        if (!result.canceled) {
-            setImage((result.assets[0] as any).uri);
-            handleImageUpload((result.assets[0] as any).uri);
-        }
-    };
 
     const handleImageUpload = async (imageUri: any) => {
         try {
@@ -150,16 +161,36 @@ const SubmitGradeTicket = ({
             console.error('Error:', error);
         }
     };
-    const getStatusColor = (status: number) => {
-        if (status === 2) return COLORS.red;
-        if (status === 1) return COLORS.green;
-        return COLORS.gray4;
-    }
-    const getStatusText = (status: number) => {
-        if (status === 2) return 'Rejected';
-        if (status === 1) return 'Approved'
-        return 'Pending';
-    }
+    const takePhoto = useCallback(async () => {
+        let result = await ImagePicker.launchCameraAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1,
+        });
+
+        if (result.canceled) {
+            // If the user cancels, do nothing
+            return;
+        }
+
+        setImage((result as any).uri);
+        handleImageUpload(result.assets[0]?.uri);
+    }, [handleImageUpload]);
+    const pickImage = useCallback(async () => {
+        // No permissions request is necessary for launching the image library
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.All,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            setImage((result.assets[0] as any).uri);
+            handleImageUpload((result.assets[0] as any).uri);
+        }
+    }, [handleImageUpload]);
     const renderHeader = () => {
         return (
             <View
@@ -177,12 +208,8 @@ const SubmitGradeTicket = ({
                         color={COLORS.black}
                     />
                 </TouchableOpacity>
-                <TouchableOpacity>
-                    <Feather
-                        name="more-horizontal"
-                        size={24}
-                        color={COLORS.black}
-                    />
+                <TouchableOpacity onPress={() => handleSubmit()}>
+                    <Text>Submit</Text>
                 </TouchableOpacity>
             </View>
 
@@ -192,36 +219,102 @@ const SubmitGradeTicket = ({
     /**
      * Render content
      */
-
+    const inputChangedHandler = useCallback(
+        (inputId: any, inputValue: any) => {
+            const result = validateInput(inputId, inputValue)
+            dispatchFormState({ inputId, validationResult: result, inputValue })
+        },
+        [dispatchFormState]
+    )
     const renderContent = () => {
-        const [isTopicOpen, setIsTopicOpen] = useState(false);
 
         return (
-            <View
-                style={{
-                    marginBottom: 140,
-                    marginTop: 30
-                }}
-            >
+            <View style={{ marginBottom: 140, marginTop: 30 }}>
                 <View style={styles.inputContainer}>
                     <Text style={styles.subtitle}>Title</Text>
-                    <TextInput
-                        placeholder="Add title here..."
+                    <Input
+                        id="title"
+                        onInputChanged={inputChangedHandler}
+                        errorText={formState.inputValidities['title']}
+                        placeholder="Your title"
+                        autoCapitalize="none"
                         placeholderTextColor={COLORS.black}
-                        onChangeText={handleTitleChange}
-                        style={[styles.inputField, { height: 30 }]}
+                        iconPack={MaterialCommunityIcons}
+                        icon="subtitles-outline"
+                    />
+                </View>
+                <View style={styles.inputContainer}>
+                    <Text style={styles.subtitle}>Semester: </Text>
+                    <DropDownPicker
+                        open={isSemesterOpen}
+                        value={selectedSemester}
+                        items={semestersData as any}
+                        setOpen={setSemesterOpen}
+                        setValue={setSelectedSemester}
+                        setItems={setItems}
+                        searchable={true}
                     />
                 </View>
 
+
+                {/* Checkbox for "Event" */}
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Checkbox
+                        status={isEvent ? 'checked' : 'unchecked'}
+                        onPress={handleEventCheckboxChange}
+                    />
+                    <Text style={styles.subtitle}>Event</Text>
+                </View>
+
+                {/* Show the search dropdown only when the "Event" checkbox is selected */}
+                {isEvent && (
+                    <DropDownPicker
+                        open={open}
+                        value={selectedEventId}
+                        items={data}
+                        setOpen={setOpen}
+                        setValue={setEventId}
+                        setItems={setItems}
+                        searchable={true}
+                    />
+                )}
+
+
+                {/* Checkbox for "Other" */}
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Checkbox
+                        status={isOther ? 'checked' : 'unchecked'}
+                        onPress={handleOtherCheckboxChange}
+                    />
+                    <Text style={styles.subtitle}>Nguoi kiem chung</Text>
+
+                </View>
+                {isOther ? <View style={styles.inputContainer}>
+                    <Text style={styles.subtitle}>Email</Text>
+                    <Input
+                        id="email"
+                        onInputChanged={inputChangedHandler}
+                        errorText={formState.inputValidities['email']}
+                        placeholder="Your Email"
+                        autoCapitalize="none"
+                        placeholderTextColor={COLORS.black}
+                        iconPack={MaterialCommunityIcons}
+                        icon="email-outline"
+                    />
+                </View> : null}
                 <View style={styles.inputContainer}>
                     <Text style={styles.subtitle}>Content</Text>
-                    <TextInput
+                    <Input
+                        id="content"
+                        onInputChanged={inputChangedHandler}
+                        errorText={formState.inputValidities['content']}
                         placeholder="Add content here..."
-                        placeholderTextColor={COLORS.black}
+                        autoCapitalize="none"
                         multiline
                         numberOfLines={5}
-                        onChangeText={handleContentChange}
-                        style={[styles.inputField, { height: 120 }]}
+                        placeholderTextColor={COLORS.black}
+                        iconPack={MaterialCommunityIcons}
+                        icon="file-document-edit-outline"
                     />
                 </View>
                 <Text style={styles.subtitle}>Attachment</Text>
@@ -232,79 +325,15 @@ const SubmitGradeTicket = ({
         );
     };
 
-    const renderFooter = () => {
-
-
-        return (
-            <View
-                style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    height: 140,
-                    borderTopLeftRadius: 30,
-                    borderTopRightRadius: 30,
-                    padding: 16,
-                    alignItems: 'center',
-                    shadowOffset: {
-                        width: 2,
-                        height: 2,
-                    },
-                    shadowOpacity: 0.25,
-                    shadowRadius: 3.84,
-                }}
-            >
-                <TouchableOpacity
-                    style={{
-                        backgroundColor: COLORS.primary,
-                        paddingVertical: 12,
-                        paddingHorizontal: 24,
-                        borderRadius: 8,
-                    }}
-                    onPress={handleSubmit}
-                >
-                    <Text
-                        style={{
-                            color: COLORS.white,
-                            fontSize: 16,
-                            fontFamily: 'semiBold',
-                        }}
-                    >
-                        Submit
-                    </Text>
-                </TouchableOpacity>
-            </View>
-        );
-    };
     return (
         <SafeAreaView style={styles.area}>
             <View style={styles.container}>
                 {renderHeader()}
-                <ScrollView showsVerticalScrollIndicator={false}>
+                <KeyboardAwareScrollView extraScrollHeight={100} enableOnAndroid={true}
+                    keyboardShouldPersistTaps='handled' showsVerticalScrollIndicator={false}>
                     {renderContent()}
-                    <View>
-                        {/* {/* <Input
-                            id="username"
-                            onInputChanged={inputChangedHandler}
-                            placeholder="Your Email"
-                            autoCapitalize="none"
-                            placeholderTextColor={COLORS.black}
-                            icon="email-outline"
-                        /> */}
-                        {/* <Input
-                            onInputChanged={inputChangedHandler}
-                            autoCapitalize="none"
-                            id="password"
-                            placeholder="Password"
-                            placeholderTextColor={COLORS.black}
-                            secureTextEntry={true}
-                            iconPack={Feather}
-                            icon="lock"
-                        /> */}
-                    </View>
-                </ScrollView>
-                {renderFooter()}
+                </KeyboardAwareScrollView>
+
             </View>
         </SafeAreaView>
     )

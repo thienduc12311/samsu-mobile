@@ -73,7 +73,6 @@ const GradeTicketDetail = ({
                     }}
                 >
                     <View style={styles.itemContainer}>
-                        <AntDesign name="staro" size={20} color="#FDBD31" />
                         {ticket.accepter !== null && <Text style={styles.itemTitle}>Score: {ticket.score}</Text>}
                     </View>
                     <Text style={styles.itemTitle}>Status: </Text>

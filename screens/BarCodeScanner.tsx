@@ -168,7 +168,7 @@ export default function SnyBarCodeScanner(props: any) {
                         <Text style={{ fontSize: 20, marginBottom: 20 }}>Student Profile</Text>
                         {userData && (
                             <View style={{ alignItems: 'center' }}>
-                                <Image source={{ uri: userData.avt ?? dubUrl }} style={{ width: 150, height: 150, marginBottom: 20 }} />
+                                <Image source={{ uri: userData.avatar ?? dubUrl }} style={{ width: 150, height: 150, marginBottom: 20 }} />
                                 <Text>Name: {userData.name}</Text>
                                 <Text>Roll Number: {userData.rollnumber}</Text>
                             </View>

@@ -23,7 +23,7 @@ import SocialButton from '../components/SocialButton';
 import ToastItem from '../components/ToastItem';
 import { COLORS, SIZES, icons } from '../constants';
 import { useAppContext } from '../contexts/AppContext';
-import { SET_USER } from '../contexts/context-type';
+import { SET_SEMESTERS, SET_USER } from '../contexts/context-type';
 import { validateInput } from '../utils/actions/formActions';
 import { get } from '../utils/helpers/api-helper';
 import { reducer } from '../utils/reducers/formReducers';
@@ -56,22 +56,21 @@ const Login = ({
     GoogleSignin.configure({
         scopes: ['profile', 'email'],
         webClientId: '233487864072-ldpmp56m9cr11utl8ev17l94a5jf63h9.apps.googleusercontent.com',
-        iosClientId: '233487864072-0j8qc859fmajv39pfd1g5r3qlsiuir07.apps.googleusercontent.com'
     });
 
     const fetchUserProfile = async () => {
-        const userProfileResponse = await get('/users/me');
+        const [userProfileResponse, semesterResponse] = await Promise.all([get('/users/me'), get('/semesters')]);
         if (userProfileResponse.status === 200) {
             dispatch({ type: SET_USER, payload: userProfileResponse.data })
         }
+        if (semesterResponse.status === 200) {
+            dispatch({ type: SET_SEMESTERS, payload: (semesterResponse.data as any).content })
+        }
     }
-    const handleLoginWithGoogle = async () => {
-        console.log(response);
-        if (response?.type === 'success') {
-            console.log(response.authentication?.accessToken);
-            console.log(response);
+    const handleLoginWithGoogle = async (accessToken: string) => {
+
             try {
-                const fetchRes = await axios.post(`https://api.samsu-fpt.software/api/auth/login-google?accessToken=${response.authentication?.accessToken}`);
+                const fetchRes = await axios.post(`https://api.samsu-fpt.software/api/auth/login-google?accessToken=${accessToken}`);
                 if (fetchRes.status === 200) {
                     await AsyncStorage.setItem('accessToken', fetchRes.data?.jwtToken.accessToken);
                     if (fetchRes.data?.firstTime) {
@@ -88,16 +87,16 @@ const Login = ({
             } catch (error) {
                 console.log(error);
             }
-        }
     }
 
     const handleGoogleLogin = async () => {
         try {
             await GoogleSignin.hasPlayServices();
             const userInfo = await GoogleSignin.signIn();
-
-            // You can now use userInfo.idToken to authenticate with your backend server
-            console.log('Google login success:', userInfo);
+            if (userInfo.idToken) {
+                const response = await GoogleSignin.getTokens();
+                await handleLoginWithGoogle(response.accessToken)
+            }
 
         } catch (error) {
             console.error('Error with Google login:', error);
@@ -143,7 +142,7 @@ const Login = ({
         [dispatchFormState]
     )
     useEffect(() => {
-        handleLoginWithGoogle();
+        // handleLoginWithGoogle();
     }, [response])
     useEffect(() => {
         if (error) {

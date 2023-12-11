@@ -17,6 +17,7 @@ import {
     View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getFCMToken } from '../App';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import SocialButton from '../components/SocialButton';
@@ -25,7 +26,7 @@ import { COLORS, SIZES, icons } from '../constants';
 import { useAppContext } from '../contexts/AppContext';
 import { SET_SEMESTERS, SET_USER } from '../contexts/context-type';
 import { validateInput } from '../utils/actions/formActions';
-import { get } from '../utils/helpers/api-helper';
+import { get, post } from '../utils/helpers/api-helper';
 import { reducer } from '../utils/reducers/formReducers';
 const isTestMode = true
 const initialState = {
@@ -49,6 +50,7 @@ const Login = ({
     const [isLoading, setIsLoading] = useState(false)
     const [formState, dispatchFormState] = useReducer(reducer, initialState)
     const [isSuccess, setIsSuccess] = useState(false);
+
     const [request, response, promptAsync] = Google.useAuthRequest({
         iosClientId: '233487864072-0j8qc859fmajv39pfd1g5r3qlsiuir07.apps.googleusercontent.com',
         androidClientId: '233487864072-2najknfkasvsk33dj70rucmbj33h6eni.apps.googleusercontent.com',
@@ -59,13 +61,18 @@ const Login = ({
     });
 
     const fetchUserProfile = async () => {
-        const [userProfileResponse, semesterResponse] = await Promise.all([get('/users/me'), get('/semesters')]);
+         const fcmToken = await getFCMToken();
+
+         const [userProfileResponse, semesterResponse, tokenResponse] = await Promise.all([get('/users/me'), get('/semesters'), post('/notifications/token', { token: fcmToken })]);
         if (userProfileResponse.status === 200) {
             dispatch({ type: SET_USER, payload: userProfileResponse.data })
         }
         if (semesterResponse.status === 200) {
             dispatch({ type: SET_SEMESTERS, payload: (semesterResponse.data as any).content })
         }
+         if (tokenResponse.status === 200) {
+             console.log(tokenResponse.data);
+         }
     }
     const handleLoginWithGoogle = async (accessToken: string) => {
 
@@ -73,6 +80,7 @@ const Login = ({
                 const fetchRes = await axios.post(`https://api.samsu-fpt.software/api/auth/login-google?accessToken=${accessToken}`);
                 if (fetchRes.status === 200) {
                     await AsyncStorage.setItem('accessToken', fetchRes.data?.jwtToken.accessToken);
+
                     if (fetchRes.data?.firstTime) {
                         navigation.navigate('Register');
                     } else {
@@ -84,8 +92,14 @@ const Login = ({
                         });
                     }
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.log(error);
+                if (error.response && error.response.status === 401) {
+                    setError(`You don't have permission to login`);
+                } else {
+                    console.error('An error occurred:', error);
+                    setError('An error occurred. Please try again later.');
+                }
             }
     }
 
@@ -98,8 +112,9 @@ const Login = ({
                 await handleLoginWithGoogle(response.accessToken)
             }
 
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error with Google login:', error);
+
         }
     };
 

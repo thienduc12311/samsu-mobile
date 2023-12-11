@@ -17,6 +17,7 @@ import { ScrollView } from 'react-native-virtualized-view'
 import KeywordItem from '../components/KeywordItem'
 import MyTaskCard from '../components/MyTaskCard'
 import { COLORS, FONTS, icons } from '../constants'
+import { hasTimestampPassed } from '../utils/date'
 import { get } from '../utils/helpers/api-helper'
 export const STATUS = [
     { id: '0', keyword: 'All', status: -1 },
@@ -58,7 +59,11 @@ const MyTasks = ({
 
         setFilteredTasks(filtered);
     };
-
+    const getTaskStatus = (task: any) => {
+        if (task.status === 0 && hasTimestampPassed(task.task.deadline || 1))
+            return 6;
+        return task.status;
+    }
     const applyStatusFilter = (id: number) => {
         if (selectedKeywords.length === 1 && id === -1) {
             // "All" status selected, skip status filter
@@ -70,7 +75,7 @@ const MyTasks = ({
             // Apply both search and status filters
             const tasks = myTasks;
             const filtered = tasks.filter((task) =>
-                task.task.title.toLowerCase().includes(search.toLowerCase()) && id === task.status
+                task.task.title.toLowerCase().includes(search.toLowerCase()) && id === (getTaskStatus(task))
             );
             setFilteredTasks(filtered);
         }

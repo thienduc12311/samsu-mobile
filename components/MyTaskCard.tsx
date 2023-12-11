@@ -4,6 +4,7 @@ import React from 'react'
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { isNumber } from 'validate.js'
 import { COLORS, SIZES } from '../constants'
+import { hasTimestampPassed } from '../utils/date'
 
 const MyTaskCard = ({
     percentage,
@@ -13,6 +14,14 @@ const MyTaskCard = ({
     onPress,
     status
 }: any) => {
+    const getTaskStatus = (task: any) => {
+        if (status === 0 && hasTimestampPassed(deadline || 1)) {
+            return 6;
+        }
+        return status;
+    }
+    const parseStatus = getTaskStatus(status);
+
     const timeDeadline = deadline ?? 1;
     const date = DateTime.fromMillis(timeDeadline).setZone('Asia/Bangkok');
     const getStatusColor = (status: number) => {
@@ -43,6 +52,8 @@ const MyTaskCard = ({
                 return 'Finished'
             case 5:
                 return 'Did not finish'
+            case 6:
+                return 'Expired'
             default:
                 return 'Pending'
         }
@@ -92,7 +103,7 @@ const MyTaskCard = ({
                                     color: COLORS.white,
                                 }}
                             >
-                                {getStatusText(status)}
+                                {getStatusText(parseStatus)}
                             </Text>
                         </View>
                     </View>

@@ -2,8 +2,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import React, { useEffect, useState } from 'react'
+import { StyleSheet } from 'react-native'
+import { getFCMToken } from '../App'
+import { COLORS } from '../constants'
 import { useAppContext } from '../contexts/AppContext'
-import { SET_USER } from '../contexts/context-type'
+import { SET_SEMESTERS, SET_USER } from '../contexts/context-type'
 import {
     AccessChapter,
     AccessChapterContent,
@@ -38,7 +41,7 @@ import GradeTicketDetail from '../screens/GradeTicketDetails'
 import MyTasks from '../screens/MyTasks'
 import SubmitGradeTicket from '../screens/SubmitGradeTicket'
 import TaskDetails from '../screens/TaskDetails'
-import { get } from '../utils/helpers/api-helper'
+import { get, post } from '../utils/helpers/api-helper'
 import BottomTabNavigation from './BottomTabNavigation'
 
 const Stack = createNativeStackNavigator()
@@ -48,37 +51,36 @@ const AppNavigation = () => {
     const [isLoading, setIsLoading] = useState(true)
     const { state, dispatch } = useAppContext();
     const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+
     useEffect(() => {
-        const fetchUserProfile = async () => {
-            const userProfileResponse = await get('/users/me');
-            if (userProfileResponse.status === 200) {
-                dispatch({ type: SET_USER, payload: userProfileResponse.data })
+        const checkLoggedIn = async () => {
+            const token = await AsyncStorage.getItem('accessToken');
+            if (token) {
                 setIsLoggedIn(true);
-            }
-        }
-        const checkIfLoggedIn = async () => {
-            try {
-                const value = await AsyncStorage.getItem('alreadyLaunched')
-                if (value === null) {
-                    await AsyncStorage.setItem('alreadyLaunched', 'true')
-                    // @ts-expect-error TS(2345): Argument of type 'true' is not assignable to param... Remove this comment to see the full error message
-                    setIsFirstLaunch(true)
-                } else {
-                    // @ts-expect-error TS(2345): Argument of type 'false' is not assignable to para... Remove this comment to see the full error message
-                    setIsFirstLaunch(false)
-                }
-            } catch (error) {
-                // @ts-expect-error TS(2345): Argument of type 'false' is not assignable to para... Remove this comment to see the full error message
-                setIsFirstLaunch(false)
+                await fetchUserProfile();
             }
             setIsLoading(false) // Set loading state to false once the check is complete
         }
-        fetchUserProfile();
-        checkIfLoggedIn()
-    }, [])
+        checkLoggedIn();
+    }, []);
+    const fetchUserProfile = async () => {
+        const fcmToken = await getFCMToken();
 
+        const [userProfileResponse, semesterResponse, tokenResponse] = await Promise.all([get('/users/me'), get('/semesters'), post('/notifications/token', { token: fcmToken })]);
+        if (userProfileResponse.status === 200) {
+            setIsLoggedIn(true);
+            dispatch({ type: SET_USER, payload: userProfileResponse.data })
+        }
+        if (semesterResponse.status === 200) {
+            dispatch({ type: SET_SEMESTERS, payload: (semesterResponse.data as any).content })
+        }
+        if (tokenResponse.status === 200) {
+            console.log(tokenResponse.data);
+        }
+    }
     if (isLoading) {
-        return null // Render a loader or any other loading state component
+        return null; // Render a loader or any other loading state component
     }
 
     return (
@@ -255,5 +257,23 @@ const AppNavigation = () => {
         </NavigationContainer>
     )
 }
-
+const styles = StyleSheet.create({
+    area: {
+        flex: 1,
+        bckgroundColor: COLORS.white,
+    },
+    container: {
+        flex: 1,
+        backgroundColor: COLORS.white,
+        padding: 16,
+    },
+    headerContainer: {
+        marginVertical: 20,
+    },
+    logo: {
+        width: 400, // Adjust the width as needed
+        height: 400, // Adjust the height as needed
+        alignSelf: 'center',
+    },
+})
 export default AppNavigation

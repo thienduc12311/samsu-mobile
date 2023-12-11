@@ -19,6 +19,9 @@ async function requestUserPermission() {
         console.log('Authorization status:', authStatus);
     }
 }
+messaging()
+    .subscribeToTopic('all')
+    .then(() => console.log('Subscribed to topic!'));
 const getToken = async () => {
     try {
         const token = await firebase.messaging().getToken();
@@ -28,7 +31,7 @@ const getToken = async () => {
     }
 };
 
-const getFCMToken = async () => {
+export const getFCMToken = async () => {
     try {
         const authorized = await firebase.messaging().hasPermission();
         const fcmToken = await getToken();
@@ -50,15 +53,16 @@ messaging().setBackgroundMessageHandler(async remoteMessage => {
 });
 
 export default function App() {
-    const [fontsLoaded] = useFonts(FONTS)
+    const [fontsLoaded] = useFonts(FONTS);
+
     useEffect(() => {
         const getBarCodeScannerPermissions = async () => {
             const { status } = await BarCodeScanner.requestPermissionsAsync();
         };
         requestUserPermission();
         getBarCodeScannerPermissions(); 
-        getFCMToken();
     }, []);
+
     useEffect(() => {
         const unsubscribe = messaging().onMessage(async remoteMessage => {
             Alert.alert((remoteMessage.notification?.title as string), (remoteMessage.notification?.body));

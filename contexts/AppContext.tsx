@@ -1,5 +1,5 @@
 import React, { ReactNode, createContext, useContext, useReducer } from 'react';
-import { SET_MY_EVENT, SET_SEMESTERS, SET_USER } from './context-type';
+import { SET_FCM_TOKEN, SET_MY_EVENT, SET_SEMESTERS, SET_USER } from './context-type';
 
 // Define the types for the context and state
 export interface User {
@@ -33,6 +33,7 @@ type AppState = {
     user: null | User; // Replace 'any' with the actual type of your user data
     theme: 'light' | 'dark';
     semesters: Semester[] | null;
+    fcmToken: string | null;
 };
 
 type AppAction = {
@@ -53,7 +54,8 @@ const initialState: AppState = {
     user: null,
     myEvents: null,
     theme: 'light',
-    semesters: null
+    semesters: null,
+    fcmToken: null
 };
 
 // Reducer function to update the state
@@ -65,6 +67,8 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
             return { ...state, myEvents: action.payload }
         case SET_SEMESTERS:
             return { ...state, semesters: action.payload }
+        case SET_FCM_TOKEN:
+            return { ...state, fcmToken: action.payload }
         case 'TOGGLE_THEME':
             return { ...state, theme: state.theme === 'light' ? 'dark' : 'light' };
         default:

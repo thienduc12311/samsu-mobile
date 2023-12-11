@@ -41,6 +41,7 @@ import GradeTicketDetail from '../screens/GradeTicketDetails'
 import MyTasks from '../screens/MyTasks'
 import SubmitGradeTicket from '../screens/SubmitGradeTicket'
 import TaskDetails from '../screens/TaskDetails'
+import ViewMyGrade from '../screens/ViewMyGrade'
 import { get, post } from '../utils/helpers/api-helper'
 import BottomTabNavigation from './BottomTabNavigation'
 
@@ -231,6 +232,11 @@ const AppNavigation = () => {
                 <Stack.Screen
                     name="TermsAndConditions"
                     component={TermsAndConditions}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name="MyGrade"
+                    component={ViewMyGrade}
                     options={{ headerShown: false }}
                 />
                 <Stack.Screen

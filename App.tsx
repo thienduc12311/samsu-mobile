@@ -51,6 +51,8 @@ SplashScreen.preventAutoHideAsync()
 messaging().setBackgroundMessageHandler(async remoteMessage => {
     console.log('Message handled in the background!', remoteMessage);
 });
+// Listen for background notifications
+
 
 export default function App() {
     const [fontsLoaded] = useFonts(FONTS);

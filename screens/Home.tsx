@@ -391,7 +391,7 @@ const Home = ({
                     >
                         Overview
                     </Text>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.navigate('MyGrade')}>
                         <Text
                             style={{
                                 fontFamily: 'medium',

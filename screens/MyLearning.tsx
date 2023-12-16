@@ -4,6 +4,7 @@ import {
     ActivityIndicator,
     FlatList,
     Image,
+    RefreshControl,
     StyleSheet,
     Text,
     TextInput,
@@ -29,29 +30,35 @@ const MyLearning = ({
     const { state } = useAppContext();
     const [events, setEvents] = useState<any[]>([]);
     const isFocused = useIsFocused();
+    const [refreshing, setRefreshing] = useState(false);
 
     const { user } = state;
     useEffect(() => {
         let upcomingEvents: any[] = [];
         let pastEvents: any[] = [];
-
-        // Simulate fetching questions from an API 
-        const fetchData = async () => {
-            try {
-                const response = await get('/events/public');
-                if (response.status === 200) {
-                    const events = (response.data as any).content;
-                    setEvents(events);
-                }
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            } finally {
-                setLoading(false); // Set loading to false once the data is fetched or an error occurs
-            }
-        };
-
         fetchData();
-    }, [isFocused]); 
+    }, []);
+    const onRefresh = async () => {
+        setRefreshing(true);
+
+        // Fetch new data or update existing data
+        await fetchData();
+
+        setRefreshing(false);
+    };
+    const fetchData = async () => {
+        try {
+            const response = await get('/events/public');
+            if (response.status === 200) {
+                const events = (response.data as any).content;
+                setEvents(events);
+            }
+        } catch (error) {
+            console.error('Error fetching data:', error);
+        } finally {
+            setLoading(false); // Set loading to false once the data is fetched or an error occurs
+        }
+    };
     const renderHeader = () => {
         return (
             <View style={{ alignItems: 'center' }}>
@@ -185,7 +192,7 @@ const MyLearning = ({
                             textAlign: 'center',
                         }}
                     >
-                        See all
+                        See more
                     </Text>
                 </TouchableOpacity>
                 {/* <Text style={styles.subtitle}>Bootcamp</Text>
@@ -226,7 +233,11 @@ const MyLearning = ({
             <View style={styles.container}>
                 {renderHeader()}
                 {renderSearchBar()}
-                <ScrollView showsVerticalScrollIndicator={false}>
+                <ScrollView showsVerticalScrollIndicator={false} refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                    />}>
                     {loading ? (
                         // Render a loading spinner while fetching data
                         <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 20 }} />

@@ -39,6 +39,8 @@ import EventDetail from '../screens/EventDetail'
 import FeedbackAnswer from '../screens/FeedbackAnswer'
 import GradeTicketDetail from '../screens/GradeTicketDetails'
 import MyTasks from '../screens/MyTasks'
+import PostDetails from '../screens/PostDetails'
+import Posts from '../screens/Posts'
 import SubmitGradeTicket from '../screens/SubmitGradeTicket'
 import TaskDetails from '../screens/TaskDetails'
 import ViewMyGrade from '../screens/ViewMyGrade'
@@ -232,6 +234,16 @@ const AppNavigation = () => {
                 <Stack.Screen
                     name="TermsAndConditions"
                     component={TermsAndConditions}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name="Posts"
+                    component={Posts}
+                    options={{ headerShown: false }}
+                />
+                <Stack.Screen
+                    name="PostDetails"
+                    component={PostDetails}
                     options={{ headerShown: false }}
                 />
                 <Stack.Screen

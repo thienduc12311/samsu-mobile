@@ -109,7 +109,7 @@ const MyTasks = ({
 
     useEffect(() => {
         fetchData();
-    }, [isFocused]);
+    }, []);
     const [search, setSearch] = useState('')
 
     const renderSearchBar = () => {

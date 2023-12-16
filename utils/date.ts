@@ -44,3 +44,7 @@ export function getTimeAgo(datePost: any) {
     const years = Math.floor(months / 12)
     return `${years} years ago`
 }
+
+export function getFormatedDateFromTimestamp(timestamp: number) {
+    return new Date(timestamp).toLocaleString()
+}

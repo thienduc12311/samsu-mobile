@@ -17,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { ScrollView } from 'react-native-virtualized-view'
 import Button from '../components/Button'
 import MenuItem from '../components/MenuItem'
-import { COLORS, icons, images } from '../constants'
+import { COLORS, icons } from '../constants'
 import { useAppContext } from '../contexts/AppContext'
 
 const Profile = ({
@@ -145,7 +145,7 @@ const Profile = ({
                     }}
                 >
                     <Image
-                        source={images.avatar2}
+                        source={{ uri: user?.avatar }}
                         resizeMode="contain"
                         style={{
                             height: 90,
@@ -232,16 +232,16 @@ const Profile = ({
                         icon={icons.quality}
                         onPress={() => navigation.navigate('Feedback')}
                     /> */}
-                    <MenuItem
+                    {/* <MenuItem
                         name="History Transaction"
                         icon={icons.document2}
                         onPress={() => navigation.navigate('ListHistory')}
-                    />
-                    <MenuItem
+                    /> */}
+                    {/* <MenuItem
                         name="FAQ"
                         icon={icons.faq}
                         onPress={() => console.log('Faq')}
-                    />
+                    /> */}
                     <MenuItem
                         name="Terms & Conditions"
                         icon={icons.document}

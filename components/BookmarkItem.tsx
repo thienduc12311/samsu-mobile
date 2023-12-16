@@ -12,11 +12,15 @@ const BookmarkItem = ({
     const getStatusColor = (status: number) => {
         if (status === 2) return COLORS.red;
         if (status === 1) return COLORS.green;
+        if (status === 4) return COLORS.red;
+        if (status === 3) return COLORS.green;
         return COLORS.gray4;
     }
     const getStatusText = (status: number) => {
-        if (status === 2) return 'Rejected';
-        if (status === 1) return 'Approved'
+        if (status === 4) return 'Rejected'
+        if (status === 3) return 'Approved'
+        if (status === 2) return 'Guarantee Rejected';
+        if (status === 1) return 'Guarantee Approved'
         return 'Pending';
     }
     return (

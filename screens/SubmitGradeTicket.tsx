@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import axios from 'axios';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useCallback, useReducer, useState } from 'react';
-import { Alert, Button, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Button, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Checkbox } from 'react-native-paper';
@@ -50,6 +50,8 @@ const SubmitGradeTicket = () => {
     const data = myEvents.map((event: any) => {
         return { label: event.title, value: event.id }
     })
+    const [loading, setLoading] = useState(false); // Add loading state
+
     const semestersData = semesters?.map((semester) => { return { label: semester.name, value: semester.name } })
     const [isEvent, setIsEvent] = useState(false);
     const [isOther, setIsOther] = useState(false);
@@ -81,7 +83,6 @@ const SubmitGradeTicket = () => {
         const content = formState.inputValues['content'];
         const email = formState.inputValues['email'];
         const eventId = isEvent ? selectedEventId : null;
-        console.log(eventId);
         if (title.length <= 0 || content.length <= 0 || imageUrl.length <= 0) {
             Alert.alert('Error', 'Title, Content and attachment must not be null!');
             return;
@@ -91,17 +92,23 @@ const SubmitGradeTicket = () => {
             Alert.alert('Error', 'Email is not valid');
             return;
         }
+
+        setLoading(true); // Set loading to true during submission
+
         try {
-            const response = await post('/gradeTicket', { title, content, evidenceUrls: imageUrl, eventId, guarantorEmail: email, semesterName: selectedSemester });
+            const response = await post('/gradeTicket', { title, content, evidenceUrls: imageUrl, eventId, guarantorEmail: isOther ? email : null, semesterName: selectedSemester });
+
             if (response.status === 201) {
                 Alert.alert('Success', 'Successfully created a ticket!');
-                navigation.goBack()
+                navigation.goBack();
             } else {
-                Alert.alert('Failed', 'Failed to created a ticket!');
-                navigation.goBack()
+                Alert.alert('Failed', 'Failed to create a ticket!');
             }
         } catch (error: any) {
-            console.log(error.response)
+            console.error('Error:', error.response.data);
+            Alert.alert('Failed', 'Failed to create a ticket!');
+        } finally {
+            setLoading(false); // Set loading to false after submission completes
         }
 
     };
@@ -113,7 +120,7 @@ const SubmitGradeTicket = () => {
         try {
             // Convert the image URI to a Blob object
             const token = await AsyncStorage.getItem('accessToken');
-
+            console.log(imageUri);
             const file = await fetch(imageUri);
             const blob = await file.blob();
             const urlWithQuery = `${preSignedUrlEndpoint}?filename=${encodeURIComponent((blob as any)._data.name)}`;
@@ -149,26 +156,43 @@ const SubmitGradeTicket = () => {
                         'Content-Type': 'multipart/form-data',
                     },
                 };
-
                 await axios.post(preSignedPostData.url, formData, axiosConfig).catch((error) => {
-                    console.error('Error in axios.post:', error);
+                    console.error('Error in axios.post:', error.response.data);
                 });
                 const downloadUrl = `${preSignedPostData.url}/${preSignedPostData.fields['key']}`;
                 setImageUrl(downloadUrl);
+                console.log(downloadUrl);
             } else {
             }
         } catch (error) {
             console.error('Error:', error);
         }
     };
-    const takePhoto = useCallback(async () => {
-        let result = await ImagePicker.launchCameraAsync({
+    // const takePhoto = useCallback(async () => {
+    //     let result = await ImagePicker.launchCameraAsync({
+    //         mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    //         allowsEditing: true,
+    //         aspect: [4, 3],
+    //         quality: 1,
+    //     });
+
+    //     if (result.canceled) {
+    //         // If the user cancels, do nothing
+    //         return;
+    //     }
+
+    //     setImage((result as any).uri);
+    //     handleImageUpload(result.assets[0]?.uri);
+    // }, [handleImageUpload]);
+    const takePhoto = async () => {
+        console.log(await ImagePicker.launchCameraAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
-            allowsEditing: true,
+            allowsEditing: false,
             aspect: [4, 3],
             quality: 1,
-        });
-
+        }));
+        let result = await ImagePicker.launchCameraAsync();
+        console.log('result', result);
         if (result.canceled) {
             // If the user cancels, do nothing
             return;
@@ -176,7 +200,8 @@ const SubmitGradeTicket = () => {
 
         setImage((result as any).uri);
         handleImageUpload(result.assets[0]?.uri);
-    }, [handleImageUpload]);
+    };
+
     const pickImage = useCallback(async () => {
         // No permissions request is necessary for launching the image library
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -227,7 +252,13 @@ const SubmitGradeTicket = () => {
         [dispatchFormState]
     )
     const renderContent = () => {
-
+        if (loading) {
+            return (
+                <View >
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                </View>
+            );
+        }
         return (
             <View style={{ marginBottom: 140, marginTop: 30 }}>
                 <View style={styles.inputContainer}>
@@ -286,7 +317,7 @@ const SubmitGradeTicket = () => {
                         status={isOther ? 'checked' : 'unchecked'}
                         onPress={handleOtherCheckboxChange}
                     />
-                    <Text style={styles.subtitle}>Nguoi kiem chung</Text>
+                    <Text style={styles.subtitle}>Guarantor</Text>
 
                 </View>
                 {isOther ? <View style={styles.inputContainer}>

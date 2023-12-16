@@ -4,6 +4,7 @@ import { Image, Text, View } from 'react-native'
 import { COLORS, icons } from '../constants'
 import { Bookmark, Home, MyLearning, Profile } from '../screens'
 import MyTasks from '../screens/MyTasks'
+import Posts from '../screens/Posts'
 
 const Tab = createBottomTabNavigator()
 
@@ -87,6 +88,40 @@ const BottomTabNavigation = () => {
                                     }}
                                 >
                                     My Task
+                                </Text>
+                            </View>
+                        )
+                    },
+                }}
+            />
+            <Tab.Screen
+                name="Posts"
+                component={Posts}
+                options={{
+                    tabBarIcon: ({ focused }) => {
+                        return (
+                            <View style={{ alignItems: 'center' }}>
+                                <Image
+                                    source={icons.file}
+                                    resizeMode="contain"
+                                    style={{
+                                        height: 24,
+                                        width: 24,
+                                        tintColor: focused
+                                            ? COLORS.primary
+                                            : COLORS.secondaryGray,
+                                    }}
+                                />
+                                <Text
+                                    style={{
+                                        fontSize: 12,
+                                        fontFamily: 'regular',
+                                        color: focused
+                                            ? COLORS.primary
+                                            : COLORS.secondaryGray,
+                                    }}
+                                >
+                                    Posts
                                 </Text>
                             </View>
                         )

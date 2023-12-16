@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons'
 import { useIsFocused } from '@react-navigation/native'
 import React, { useEffect, useState } from 'react'
-import { FlatList, Image, RefreshControl, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native'
+import { ActivityIndicator, FlatList, Image, RefreshControl, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ScrollView } from 'react-native-virtualized-view'
 import BookmarkItem from '../components/BookmarkItem'
@@ -12,8 +12,10 @@ import { get } from '../utils/helpers/api-helper'
 export const STATUS = [
     { id: '0', keyword: 'All', status: -1 },
     { id: '1', keyword: 'Pending', status: 0 },
-    { id: '2', keyword: 'Approved', status: 1 },
-    { id: '3', keyword: 'Rejected', status: 2 },
+    { id: '2', keyword: 'Guarantee Approved', status: 1 },
+    { id: '3', keyword: 'Guarantee Rejected', status: 2 },
+    { id: '4', keyword: 'Approved', status: 3 },
+    { id: '5', keyword: 'Rejected', status: 4 },
 ]
 
 const Bookmark = ({
@@ -33,7 +35,6 @@ const Bookmark = ({
             const response = await get('/gradeTicket');
             if (response.status === 200) {
                 setTickets((response.data as any).content);
-                console.log(response.data);
             }
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -207,6 +208,13 @@ const Bookmark = ({
      */
 
     const renderContent = () => {
+        if (loading) {
+            return (
+                <View >
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                </View>
+            );
+        }
         return (
             <View>
                 <FlatList

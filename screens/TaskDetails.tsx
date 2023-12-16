@@ -19,10 +19,8 @@ const TaskDetails = ({
     const { task } = route.params;
     const taskDeadline = task.task.deadline ?? 1;
     const date = DateTime.fromMillis(taskDeadline).setZone('Asia/Bangkok');
-
     const isFocused = useIsFocused();
     const [event, setEvent] = useState<any>();
-    console.log(task);
     useEffect(() => {
         const fetchEvent = async () => {
             const eventResponse = await get(`events/${task.task.eventId}`);
@@ -99,13 +97,13 @@ const TaskDetails = ({
         const response = await put(`tasks/${task.task.id}/assignee/${status}`)
         if (response.status === 200 && (response.data as any).success) {
             Alert.alert(`Sucessfully ${getStatusText(status).toLowerCase()} the task`)
+            navigation.navigate('MyTasks');
         }
     }
     const renderCheckInButton = () => {
         const isCheckedInTask = task?.task?.title?.toLowerCase().replace(/\s/g, '').includes('checkin');
-        console.log(isCheckedInTask)
-        return isCheckedInTask ? <>
-            <Text>So luong nguoi tham gia: {event?.participants.length}</Text>
+        return (isCheckedInTask && task.status === 1) ? <>
+            <Text>Attendance: {event?.participants.length}</Text>
             <Button
                 title="Check in"
                 filled
@@ -248,7 +246,7 @@ const TaskDetails = ({
                         Reject
                     </Text>
                 </TouchableOpacity>}
-                <TouchableOpacity
+                {task.status < 3 ? <TouchableOpacity
                     onPress={() => handleAcceptTask(task.status === 0 ? 1 : 3)}
                     style={{
                         width: 118,
@@ -270,7 +268,8 @@ const TaskDetails = ({
                     >
                         {task.status === 0 ? 'Accept task' : 'Complete task'}
                     </Text>
-                </TouchableOpacity>
+                </TouchableOpacity> : null}
+
             </View>
         )
     }

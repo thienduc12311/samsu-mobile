@@ -12,6 +12,7 @@ export interface User {
     department?: string;
     score?: number;
     attendedEvent?: number;
+    avatar: string;
 }
 export interface Semester {
     name: string

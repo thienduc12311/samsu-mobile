@@ -85,7 +85,7 @@ const Notification = ({
                         )
                     }}
                 />
-                {myTasks.length === 0 ? <Text>Khong co du lieu</Text> : null}
+                {myTasks.length === 0 ? <Text>There is no notification</Text> : null}
                 {/* <Text style={styles.subtitle}>This Week</Text>
                 <FlatList
                     data={notifications}

@@ -28,6 +28,7 @@ const EventDetail = ({
     const [isFeedback, setIsFeedback] = useState(false);
     const [isRegister, setIsRegistered] = useState(false);
     const [isCheckedIn, setIsCheckedIn] = useState(false);
+    const [isCheckoutTime, setIsCheckoutTime] = useState(false);
     const eventStartTimestamp = event?.startTime ?? 1;
     const handleEventRegister = async () => {
         const response = await get(`/events/${event?.id}/register`);
@@ -41,13 +42,16 @@ const EventDetail = ({
     }
     useEffect(() => {
         const checkFeedback = async () => {
-            const [isFeedbackResponse, isCheckedInResponse] = await Promise.all([get(`events/${event?.id}/isFeedback`), get(`events/${event?.id}/isCheckedIn`)]);
+            const [isFeedbackResponse, isCheckedInResponse, isCheckoutTimeResponse] = await Promise.all([get(`events/${event?.id}/isFeedback`), get(`events/${event?.id}/isCheckedIn`), get(`events/${event?.id}/checkOutTime`)]);
 
             if (isFeedbackResponse.status === 200 && isFeedbackResponse.data) {
                 setIsFeedback(true);
             }
             if (isCheckedInResponse.status === 200 && isCheckedInResponse.data) {
                 setIsCheckedIn(true);
+            }
+            if (isCheckedInResponse.status === 200 && isCheckoutTimeResponse.data) {
+                setIsCheckoutTime(true);
             }
         }
         checkFeedback();
@@ -366,7 +370,11 @@ const EventDetail = ({
             return getTextBlock('Please check in for this event!');
         }
 
-        if (isCheckedIn && !isPassed && !isFeedback) {
+        if (isCheckedIn && !isPassed && !isFeedback && !isCheckoutTime) {
+            return getTextBlock('Event is in progress!');
+        }
+
+        if (isCheckedIn && !isPassed && !isFeedback && isCheckoutTime) {
             return getFeedbackButton();
         }
 
@@ -388,7 +396,7 @@ const EventDetail = ({
                     {renderContent()}
                 </ScrollView>
             </View>
-            {renderFooter()}
+            {event.status === 1 && renderFooter()}
         </SafeAreaView>
     )
 }

@@ -1,7 +1,8 @@
 import { AntDesign, Feather } from '@expo/vector-icons';
 import { useNavigation } from "@react-navigation/native";
+import { isNumber } from 'radash';
 import React, { useEffect, useState } from "react";
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import CircularProgress from 'react-native-circular-progress-indicator';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { COLORS } from "../constants";
@@ -11,32 +12,87 @@ import { get } from '../utils/helpers/api-helper';
 const ViewMyGrade = () => {
     const navigation = useNavigation();
     const { state, dispatch } = useAppContext();
+
     const { user, semesters } = state;
     const [isOpen, setIsOpen] = useState(false);
     const [eventAttendance, setEventAttendance] = useState<any>();
     const [grade, setGrade] = useState<any>();
     const [taskGrade, setTaskGrade] = useState<any>();
     const [achievementGrade, setAchievementGrade] = useState<any>();
-
-    const schoolContestGrades = grade?.filter((item: any) => item.type === 1);
-    const schoolTaskGrades = grade?.filter((item: any) => item.type === 2);
+    const [loading, setLoading] = useState(true); // Add loading state
     const [currentSemester, setCurrentSemester] = useState('FA23');
+    const [subCriteria, setSubCriteria] = useState<any>();
     const mappedSemesters = semesters?.map((semester) => ({ label: semester.name, value: semester.name }));
     useEffect(() => {
-
         const fetchCurrentPoint = async () => {
-            console.log(`grade/history/semester/${currentSemester}/rollnumber/${user?.rollnumber}`);
-            const gradeResponse = await get(`grade/history/semester/${currentSemester}/me`);
-            if (gradeResponse.status === 200) {
-                const grade = gradeResponse.data as any[];
-                setGrade(gradeResponse.data as any);
-                setAchievementGrade(grade.filter((item) => item.type === 0));
-                setEventAttendance(grade.filter(item => item.type === 1));
-                setTaskGrade(grade.filter(item => item.type === 2));
+            setLoading(true); // Set loading to true before making the API call
+            try {
+                const gradeResponse = await get(`/grade/history/semester/${currentSemester}/me`);
+                if (gradeResponse.status === 200) {
+                    const grade = (gradeResponse.data as any).gradeHistory as any[];
+                    const achieve = grade.filter((item) => item.type === 2);
+                    const task = grade.filter(item => item.type === 0);
+                    const event = grade.filter(item => item.type === 1);
+                    setAchievementGrade(achieve);
+                    setEventAttendance(event);
+                    setTaskGrade(task);
+                    setGrade(gradeResponse.data as any);
+                    setSubCriteria((gradeResponse.data as any).gradeAllResponse.gradeSubCriteriaResponses)
+                }
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            } finally {
+                setLoading(false); // Set loading to false after API call completes
             }
-        }
+        };
+
         fetchCurrentPoint();
-    }, [currentSemester])
+    }, [currentSemester]);
+    const getCriteriaText = (criteriaId: number) => {
+        return (subCriteria as any[])?.find((item) => item.id === criteriaId).content;
+    }
+    const [index, setIndex] = useState(0);
+    const [routes] = useState([
+        { key: 'achievement', title: 'Achievement Grade' },
+        { key: 'task', title: 'Task Grade' },
+        { key: 'participant', title: 'Participant Grade' },
+    ]);
+
+    const [selectedTab, setSelectedTab] = useState('achievement');
+
+    const renderGradeSection = (grades: any, title: string) => {
+        let totalScore = 0; // Initialize totalScore variable
+        if (loading) {
+            return (
+                <View style={styles.gradeSection}>
+                    <Text style={styles.gradeSectionTitle}>{title}</Text>
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                </View>
+            );
+        }
+
+        return (
+            <View style={styles.gradeSection}>
+                <Text style={styles.gradeSectionTitle}>{title}</Text>
+                {grades?.map((grade: any, index: any) => {
+                    // Update totalScore for each grade
+                    totalScore += grade.score;
+
+                    return (
+                        <View key={index} style={styles.gradeItem}>
+                            <Text>{grade.title}</Text>
+                            <Text>Score: {grade.score}</Text>
+                            {isNumber(grade.gradeSubCriteriaId) ? <Text>Criteria: {getCriteriaText(grade.gradeSubCriteriaId)}</Text> : null}
+                        </View>
+                    );
+                })}
+                {/* Display the total at the end */}
+                <View style={[styles.gradeItem, { borderWidth: 0 }]}>
+                    <Text style={{ fontWeight: 'bold' }}>Total Score: {totalScore}</Text>
+                </View>
+            </View>
+        );
+    }
     const renderHeader = () => {
         return (
             <View style={{
@@ -122,36 +178,33 @@ const ViewMyGrade = () => {
                     setOpen={setIsOpen}
                     setValue={setCurrentSemester}
                 />
+
                 {/* Display School Contest Grades */}
-                <View style={styles.gradeSection}>
-                    <Text style={styles.gradeSectionTitle}>Achievement: </Text>
-                    {achievementGrade?.map((grade: any, index: any) => (
-                        <View key={index} style={styles.gradeItem}>
-                            <Text>{grade.title}</Text>
-                            <Text>Score: {grade.score}</Text>
-                        </View>
-                    ))}
+                <View style={styles.buttonsContainer}>
+                    <TouchableOpacity
+                        style={[styles.tabButton, selectedTab === 'achievement' && styles.selectedTabButton]}
+                        onPress={() => setSelectedTab('achievement')}
+                    >
+                        <Text>Achievement</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.tabButton, selectedTab === 'task' && styles.selectedTabButton]}
+                        onPress={() => setSelectedTab('task')}
+                    >
+                        <Text>Task</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[styles.tabButton, selectedTab === 'participant' && styles.selectedTabButton]}
+                        onPress={() => setSelectedTab('participant')}
+                    >
+                        <Text>Participant</Text>
+                    </TouchableOpacity>
                 </View>
 
-                {/* Display School Task Grades */}
-                <View style={styles.gradeSection}>
-                    <Text style={styles.gradeSectionTitle}>Task Grades</Text>
-                    {taskGrade?.map((grade: any, index: any) => (
-                        <View key={index} style={styles.gradeItem}>
-                            <Text>{grade.title}</Text>
-                            <Text>Score: {grade.score}</Text>
-                        </View>
-                    ))}
-                </View>
-                <View style={styles.gradeSection}>
-                    <Text style={styles.gradeSectionTitle}>Participant Grade</Text>
-                    {eventAttendance?.map((grade: any, index: any) => (
-                        <View key={index} style={styles.gradeItem}>
-                            <Text>{grade.title}</Text>
-                            <Text>Score: {grade.score}</Text>
-                        </View>
-                    ))}
-                </View>
+                {/* Render content based on the selected tab */}
+                {selectedTab === 'achievement' && renderGradeSection(achievementGrade, 'Achievement Grade')}
+                {selectedTab === 'task' && renderGradeSection(taskGrade, 'Task Grade')}
+                {selectedTab === 'participant' && renderGradeSection(eventAttendance, 'Participant Grade')}
             </View>
         </SafeAreaView>
     );
@@ -180,6 +233,21 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: 'bold',
         color: '#333',
+    }, buttonsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginBottom: 16,
+        marginTop: 16
+    },
+    tabButton: {
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: 'gray',
+    },
+    selectedTabButton: {
+        backgroundColor: COLORS.gray4,
     },
     textContainer: {
         flex: 1,

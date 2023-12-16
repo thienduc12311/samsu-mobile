@@ -1,4 +1,5 @@
 import { AntDesign, Feather } from '@expo/vector-icons'
+import { isString } from 'radash'
 import React, { useState } from 'react'
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -16,11 +17,15 @@ const GradeTicketDetail = ({
     const getStatusColor = (status: number) => {
         if (status === 2) return COLORS.red;
         if (status === 1) return COLORS.green;
+        if (status === 4) return COLORS.red;
+        if (status === 3) return COLORS.green;
         return COLORS.gray4;
     }
     const getStatusText = (status: number) => {
-        if (status === 2) return 'Rejected';
-        if (status === 1) return 'Approved'
+        if (status === 4) return 'Rejected'
+        if (status === 3) return 'Approved'
+        if (status === 2) return 'Guarantee Rejected';
+        if (status === 1) return 'Guarantee Approved'
         return 'Pending';
     }
     const renderHeader = () => {
@@ -101,6 +106,7 @@ const GradeTicketDetail = ({
                 <Text style={styles.body}>
                     {ticket.content}
                 </Text>
+                {isString(ticket.guarantorEmail) !== null && <View><Text style={styles.subtitle}>Guarantor</Text><Text>{ticket.guarantorEmail}</Text></View>}
                 <Text style={styles.subtitle}>Attachment</Text>
                 <Image
                     source={{ uri: ticket.evidenceUrls }}

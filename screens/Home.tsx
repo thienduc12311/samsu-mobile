@@ -4,6 +4,7 @@ import {
     ActivityIndicator,
     FlatList,
     Image,
+    RefreshControl,
     StyleSheet,
     Text,
     TextInput,
@@ -16,9 +17,9 @@ import { ScrollView } from 'react-native-virtualized-view'
 import { isNumber } from 'validate.js'
 import BannerItem from '../components/BannerItem'
 import CourseCard from '../components/CourseCard'
-import { COLORS, FONTS, icons, images } from '../constants'
-import { useAppContext } from '../contexts/AppContext'
-import { SET_MY_EVENT } from '../contexts/context-type'
+import { COLORS, FONTS, icons } from '../constants'
+import { User, useAppContext } from '../contexts/AppContext'
+import { SET_MY_EVENT, SET_USER } from '../contexts/context-type'
 import { hasTimestampPassed } from '../utils/date'
 import { get } from '../utils/helpers/api-helper'
 
@@ -38,6 +39,7 @@ const Home = ({
     const [search, setSearch] = useState('')
     const [selectedKeywords, setSelectedKeywords] = useState<any[]>([])
     const isFocused = useIsFocused();
+    const [refreshing, setRefreshing] = useState(false);
 
     // Use the useFocusEffect hook to reload data when the screen is focused
     // useFocusEffect(
@@ -46,14 +48,26 @@ const Home = ({
     //         fetchData();
     //     }, [])
     // );
-    useEffect(() => {       
+    useEffect(() => {  
         fetchData();
-    }, [isFocused]);
+    }, []);
+    const onRefresh = async () => {
+        setRefreshing(true);
+
+        // Fetch new data or update existing data
+        await fetchData();
+
+        setRefreshing(false);
+    };
     const fetchData = async () => {
         let upcomingEvents: any[] = [];
         let pastEvents: any[] = [];
         try {
-            const [eventsResponse, tasksResponse] = await Promise.all([get('/events/me'), get('/tasks/me')]);
+            const [eventsResponse, tasksResponse, gradeResponse, userProfileResponse] = await Promise.all([get('/events/me'), get('/tasks/me'), get('/grade/history/semester/FA23/me'), get('/users/me')]);
+            if (gradeResponse.status === 200) {
+                let dumpUser: any = { ...(userProfileResponse.data as User), score: (gradeResponse.data as any).score }
+                dispatch({ type: SET_USER, payload: dumpUser });
+            }
             if (eventsResponse.status === 200) {
                 const events = (eventsResponse.data as any).content;
                 upcomingEvents = (events as any[]).filter((event) => !hasTimestampPassed(event.startTime));
@@ -62,6 +76,7 @@ const Home = ({
                 setPastEvents(pastEvents);
                 dispatch({ type: SET_MY_EVENT, payload: events })
             }
+
             if (tasksResponse.status === 200) {
                 setMyTasks((tasksResponse.data as any).content);
                 setPendingTasks(filterPendingTask((tasksResponse.data as any).content));
@@ -72,6 +87,8 @@ const Home = ({
             setLoading(false);
         }
     };
+
+
     const filterPendingTask = (tasks: any[]) => {
         return tasks.filter((task) => task.status === 0 && (isNumber(task.task.deadline) && !hasTimestampPassed(task.task.deadline)));
     }
@@ -87,7 +104,7 @@ const Home = ({
                             }}
                         >
                             <Image
-                                source={images.avatar2}
+                                source={{ uri: user?.avatar }}
                                 resizeMode="contain"
                                 style={{
                                     height: 40,
@@ -456,7 +473,11 @@ const Home = ({
         <SafeAreaView style={styles.area}>
             <View style={styles.container}>
                 {renderHeader()}
-                <ScrollView showsVerticalScrollIndicator={false}>
+                <ScrollView showsVerticalScrollIndicator={false} refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                    />}>
                     {loading ? (
                         // Render a loading spinner while fetching data
                         <ActivityIndicator size="large" color={COLORS.primary} style={{ marginTop: 20 }} />

@@ -1,6 +1,5 @@
 import {
-    AntDesign, Feather, FontAwesome5,
-    MaterialCommunityIcons
+    AntDesign, Feather, FontAwesome5
 } from '@expo/vector-icons'
 import { StatusBar } from 'expo-status-bar'
 import React, {
@@ -18,6 +17,7 @@ import Button from '../components/Button'
 import Input from '../components/Input'
 import MenuItem from '../components/MenuItem'
 import { COLORS, icons, images } from '../constants'
+import { useAppContext } from '../contexts/AppContext'
 import { launchImagePicker } from '../utils/ImagePickerHelper'
 import { validateInput } from '../utils/actions/formActions'
 import { reducer } from '../utils/reducers/formReducers'
@@ -52,7 +52,8 @@ const UpdateProfile = ({
     const [image, setImage] = useState(null)
     const refRBSheet = useRef()
     const refRBSuccessSheet = useRef()
-
+    const { state } = useAppContext();
+    const { user } = state;
     const inputChangedHandler = useCallback(
         (inputId: any, inputValue: any) => {
             const result = validateInput(inputId, inputValue)
@@ -136,7 +137,7 @@ const UpdateProfile = ({
                             }}
                         >
                             <Image
-                                source={image === null ? images.avatar : image}
+                                source={{ uri: user?.avatar }}
                                 resizeMode="contain"
                                 style={{
                                     height: 90,
@@ -159,8 +160,9 @@ const UpdateProfile = ({
                                 placeholderTextColor={COLORS.black}
                                 iconPack={FontAwesome5}
                                 icon="user"
+                                value={user?.username}
                             />
-                            <Input
+                            {/* <Input
                                 id="email"
                                 onInputChanged={inputChangedHandler}
                                 errorText={formState.inputValidities['email']}
@@ -169,8 +171,10 @@ const UpdateProfile = ({
                                 keyboardType="email-address"
                                 iconPack={MaterialCommunityIcons}
                                 icon="email-outline"
-                            />
-                            <Input
+                                value={user?.username}
+
+                            /> */}
+                            {/* <Input
                                 id="phoneNumber"
                                 onInputChanged={inputChangedHandler}
                                 errorText={
@@ -181,7 +185,7 @@ const UpdateProfile = ({
                                 keyboardType="numeric"
                                 iconPack={MaterialCommunityIcons}
                                 icon="phone-outline"
-                            />
+                            /> */}
                             <Input
                                 onInputChanged={inputChangedHandler}
                                 errorText={

@@ -1,17 +1,26 @@
 import { AntDesign } from '@expo/vector-icons'
 import React from 'react'
-import { Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Linking, Share, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import Pdf from 'react-native-pdf'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import ShareIcon from 'react-native-vector-icons/FontAwesome'; // Import Share icon
 import { COLORS } from '../constants'
 
 const MyCertificate = ({
     navigation, route
 }: any) => { 
-    const { pdfUrl } = route;
+    const { pdfUrl } = route.params;
+
+    const handleSharePDF = () => {
+        Share.share({
+            title: 'Certificate',
+            message: 'Check out the link to this certificate',
+            url: pdfUrl,
+        });
+    };
+
     // const pdfUrl =
     //     'https://samsu.sgp1.digitaloceanspaces.com/certificate_7afdd77c-f3a0-4773-9d86-1fe79d2e0f82.pdf?AWSAccessKeyId=DO007EXLNHLTLW7GNLD7&Expires=1703181179&Signature=Foszck7YRpFHy0l2Z1181nuWV5s%3D';
-
     const handleViewPDF = () => {
         Linking.openURL(pdfUrl);
     };
@@ -34,16 +43,22 @@ const MyCertificate = ({
                         />
                     </TouchableOpacity>
                     <Text>Certificate</Text>
-                    <TouchableOpacity onPress={handleViewPDF}>
-                        <AntDesign
-                            name="clouddownloado"
-                            size={24}
-                            color={COLORS.black}
-                        />
-                    </TouchableOpacity>
+                    <View>
+                        {/* <TouchableOpacity onPress={handleViewPDF}>
+                            <AntDesign
+                                name="clouddownloado"
+                                size={24}
+                                color={COLORS.black}
+                            />
+                        </TouchableOpacity> */}
+                        <TouchableOpacity onPress={handleSharePDF}>
+                            <ShareIcon name="share" size={24} color={COLORS.black} />
+                        </TouchableOpacity>
+                    </View>
+
                 </View>
                 <Pdf trustAllCerts={false}
-                    source={{ uri: 'https://samsu.sgp1.digitaloceanspaces.com/certificate_12858dbf-52ed-460e-91db-b310ba84e376.pdf?AWSAccessKeyId=DO007EXLNHLTLW7GNLD7&Expires=1703188399&Signature=TGT4CPUE%2FeiADCTCDwgp9BOdRvE%3D' }} style={styles.pdf} onError={(error) => console.log(error)} />
+                    source={{ uri: pdfUrl }} style={styles.pdf} onError={(error) => console.log(error)} />
                 {/* <Image
                     source={images.certificate}
                     resizeMode="contain"

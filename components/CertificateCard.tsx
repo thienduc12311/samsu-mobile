@@ -9,7 +9,6 @@ const CertificateCard = ({
     subtitle,
     image
 }: any) => {
-    console.log(title)
     return (
         <TouchableOpacity onPress={onPress} style={styles.container}>
             <Image source={image} resizeMode="contain" style={styles.image} />

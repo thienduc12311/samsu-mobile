@@ -439,7 +439,7 @@ const Home = ({
                         <View style={styles.textContainer}>
                             <View style={styles.infoTextContainer}>
                                 <Text style={styles.infoLabel}>Semester:</Text>
-                                <Text style={styles.infoValue}>Fall 2023</Text>
+                                <Text style={styles.infoValue}>FA23</Text>
                             </View>
                             <View style={styles.infoTextContainer}>
                                 <Text style={styles.infoLabel}>Attended event:</Text>

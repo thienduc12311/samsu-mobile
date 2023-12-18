@@ -5,6 +5,7 @@ import {
     ActivityIndicator,
     FlatList,
     Image,
+    RefreshControl,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -27,29 +28,39 @@ const ListCertificate = ({
      */
     const { state, dispatch } = useAppContext();
     const { myEvents, semesters, user } = state;
+    const [refreshing, setRefreshing] = useState(false);
     const semestersData = semesters?.map((semester) => { return { label: semester.name, value: semester.name } })
     const [selectedSemester, setSelectedSemester] = useState('FA23');
     const [isSemesterOpen, setSemesterOpen] = useState(false);
     const [loading, setLoading] = useState(true);
     const [achievement, setAchievement] = useState<any>()
     useEffect(() => {
-        const fetchCurrentPoint = async () => {
-            setLoading(true); // Set loading to true before making the API call
-            try {
-                const achievementResponse = await get(`/achievements/semester/${selectedSemester}/me`);
-                if (achievementResponse.status === 200) {
-                    const achievement = (achievementResponse.data as any).content as any[];
-                    setAchievement(achievement)
-                }
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            } finally {
-                setLoading(false); // Set loading to false after API call completes
-            }
-        };
+
 
         fetchCurrentPoint();
     }, [selectedSemester])
+    const fetchCurrentPoint = async () => {
+        setLoading(true); // Set loading to true before making the API call
+        try {
+            const achievementResponse = await get(`/achievements/semester/${selectedSemester}/me`);
+            if (achievementResponse.status === 200) {
+                const achievement = (achievementResponse.data as any).content as any[];
+                setAchievement(achievement)
+            }
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        } finally {
+            setLoading(false); // Set loading to false after API call completes
+        }
+    };
+    const onRefresh = async () => {
+        setRefreshing(true);
+
+        // Fetch new data or update existing data
+        await fetchCurrentPoint();
+
+        setRefreshing(false);
+    };
     const renderHeader = () => {
         return (
             <View
@@ -162,7 +173,11 @@ const ListCertificate = ({
                         searchable={true}
                     />
                 </View>
-                <ScrollView showsVerticalScrollIndicator={false}>
+                <ScrollView showsVerticalScrollIndicator={false} refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                    />}>
                     {/* {renderContent()} */}
                     {renderCertificate()}
                 </ScrollView>

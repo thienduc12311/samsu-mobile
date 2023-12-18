@@ -139,7 +139,7 @@ const ViewMyGrade = () => {
                     <View style={styles.textContainer}>
                         <View style={styles.infoTextContainer}>
                             <Text style={styles.infoLabel}>Current semester:</Text>
-                            <Text style={styles.infoValue}>FU23</Text>
+                            <Text style={styles.infoValue}>FA23</Text>
                         </View>
                         <View style={styles.infoTextContainer}>
                             <Text style={styles.infoLabel}>Attended event:</Text>

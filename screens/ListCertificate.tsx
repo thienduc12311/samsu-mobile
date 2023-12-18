@@ -1,6 +1,8 @@
 import { AntDesign, Feather } from '@expo/vector-icons'
-import React from 'react'
+import { isArray } from 'radash'
+import React, { useEffect, useState } from 'react'
 import {
+    ActivityIndicator,
     FlatList,
     Image,
     StyleSheet,
@@ -8,12 +10,14 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native'
+import DropDownPicker from 'react-native-dropdown-picker'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ScrollView } from 'react-native-virtualized-view'
 import Button from '../components/Button'
 import CertificateCard from '../components/CertificateCard'
-import { COLORS, illustrations } from '../constants'
-import { certificates } from '../data/utils'
+import { COLORS, illustrations, images } from '../constants'
+import { useAppContext } from '../contexts/AppContext'
+import { get } from '../utils/helpers/api-helper'
 
 const ListCertificate = ({
     navigation
@@ -21,6 +25,31 @@ const ListCertificate = ({
     /**
      * Render header
      */
+    const { state, dispatch } = useAppContext();
+    const { myEvents, semesters, user } = state;
+    const semestersData = semesters?.map((semester) => { return { label: semester.name, value: semester.name } })
+    const [selectedSemester, setSelectedSemester] = useState('FA23');
+    const [isSemesterOpen, setSemesterOpen] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [achievement, setAchievement] = useState<any>()
+    useEffect(() => {
+        const fetchCurrentPoint = async () => {
+            setLoading(true); // Set loading to true before making the API call
+            try {
+                const achievementResponse = await get(`/achievements/semester/${selectedSemester}/me`);
+                if (achievementResponse.status === 200) {
+                    const achievement = (achievementResponse.data as any).content as any[];
+                    setAchievement(achievement)
+                }
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            } finally {
+                setLoading(false); // Set loading to false after API call completes
+            }
+        };
+
+        fetchCurrentPoint();
+    }, [selectedSemester])
     const renderHeader = () => {
         return (
             <View
@@ -63,17 +92,24 @@ const ListCertificate = ({
      */
 
     const renderCertificate = () => {
+        if (loading) {
+            return (
+                <View>
+                    <ActivityIndicator size="large" color={COLORS.primary} />
+                </View>
+            );
+        }
+        if (!isArray(achievement) || achievement?.length === 0) return renderContent();
         return (
             <FlatList
-                data={certificates}
-                // @ts-expect-error TS(2769): No overload matches this call.
+                data={achievement}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                     <CertificateCard
                         title={item.title}
-                        subtitle={item.subtitle}
-                        image={item.image}
-                        onPress={() => navigation.navigate('MyCertificate')}
+                        subtitle={item.content}
+                        image={images.certificate}
+                        onPress={() => navigation.navigate('MyCertificate', { pdfUrl: item.url })}
                     />
                 )}
             />
@@ -115,9 +151,20 @@ const ListCertificate = ({
         <SafeAreaView style={styles.area}>
             <View style={styles.container}>
                 {renderHeader()}
+                <View style={{ marginBottom: 8 }}>
+                    <Text style={styles.subtitle}>Semester: </Text>
+                    <DropDownPicker
+                        open={isSemesterOpen}
+                        value={selectedSemester}
+                        items={semestersData as any}
+                        setOpen={setSemesterOpen}
+                        setValue={setSelectedSemester}
+                        searchable={true}
+                    />
+                </View>
                 <ScrollView showsVerticalScrollIndicator={false}>
-                    {renderContent()}
-                    {/* {renderCertificate()} */}
+                    {/* {renderContent()} */}
+                    {renderCertificate()}
                 </ScrollView>
             </View>
         </SafeAreaView>

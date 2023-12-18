@@ -69,7 +69,7 @@ const MyLearning = ({
                         color: COLORS.black,
                     }}
                 >
-                    Public Event
+                    Events
                 </Text>
             </View>
         )

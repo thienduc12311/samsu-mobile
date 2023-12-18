@@ -31,8 +31,8 @@ const ViewMyGrade = () => {
                 if (gradeResponse.status === 200) {
                     const grade = (gradeResponse.data as any).gradeHistory as any[];
                     const achieve = grade.filter((item) => item.type === 2);
-                    const task = grade.filter(item => item.type === 0);
-                    const event = grade.filter(item => item.type === 1);
+                    const task = grade.filter(item => item.type === 1);
+                    const event = grade.filter(item => item.type === 0);
                     setAchievementGrade(achieve);
                     setEventAttendance(event);
                     setTaskGrade(task);

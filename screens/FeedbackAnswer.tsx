@@ -4,6 +4,7 @@ import { isArray, isEmpty, isObject } from 'radash';
 import React, { useState } from 'react';
 import { Alert, Button, Image, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { CheckBox, Rating } from 'react-native-elements';
+import { RadioButton } from 'react-native-paper';
 import { COLORS, images } from '../constants';
 import { post } from '../utils/helpers/api-helper';
 interface FeedbackAnswerProps { }
@@ -205,15 +206,30 @@ const FeedbackAnswer: React.FC<any> = ({ route }) => {
                 return (
                     <>
                         {((questions[currentQuestion] as any).choices || []).map((choice: string, index: number) => (
-                            <CheckBox
+                            <RadioButton.Item
                                 key={index}
-                                title={choice}
-                                checked={answers[currentQuestion] === choice}
+                                color={COLORS.primary}
+                                label={choice}
+                                value={choice}
+                                status={answers[currentQuestion] === choice ? 'checked' : 'unchecked'}
                                 onPress={() => handleSingleChoiceSubmit(choice)}
                             />
                         ))}
                     </>
                 );
+            // case 'single_choice':
+            //     return (
+            //         <>
+            //             {((questions[currentQuestion] as any).choices || []).map((choice: string, index: number) => (
+            //                 <CheckBox
+            //                     key={index}
+            //                     title={choice}
+            //                     checked={answers[currentQuestion] === choice}
+            //                     onPress={() => handleSingleChoiceSubmit(choice)}
+            //                 />
+            //             ))}
+            //         </>
+            //     );
             case 'rating':
                 return (
                     <Rating

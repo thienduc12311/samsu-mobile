@@ -1,7 +1,7 @@
-import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native'
-import React from 'react'
-import { COLORS } from '../constants'
 import { AntDesign } from '@expo/vector-icons'
+import React from 'react'
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { COLORS } from '../constants'
 
 const CertificateCard = ({
     onPress,
@@ -9,6 +9,7 @@ const CertificateCard = ({
     subtitle,
     image
 }: any) => {
+    console.log(title)
     return (
         <TouchableOpacity onPress={onPress} style={styles.container}>
             <Image source={image} resizeMode="contain" style={styles.image} />

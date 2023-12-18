@@ -2,7 +2,8 @@ import { AntDesign, Feather, Ionicons } from '@expo/vector-icons'
 import { useIsFocused } from '@react-navigation/native'
 import { DateTime } from 'luxon'
 import React, { useEffect, useState } from 'react'
-import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, Image, Modal, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import QRCode from 'react-native-qrcode-svg'
 import HTML from 'react-native-render-html'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ScrollView } from 'react-native-virtualized-view'
@@ -21,6 +22,8 @@ const EventDetail = ({
      */
     // const [event, setEvent] = useState(null); 
     const isFocused = useIsFocused();
+    const [refreshing, setRefreshing] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
 
     const { state } = useAppContext();
     const { event } = route.params;
@@ -28,6 +31,8 @@ const EventDetail = ({
     const [isFeedback, setIsFeedback] = useState(false);
     const [isRegister, setIsRegistered] = useState(false);
     const [isCheckedIn, setIsCheckedIn] = useState(false);
+    const [isCheckedInTime, setIsCheckedInTime] = useState(false);
+
     const [isCheckoutTime, setIsCheckoutTime] = useState(false);
     const eventStartTimestamp = event?.startTime ?? 1;
     const handleEventRegister = async () => {
@@ -41,24 +46,34 @@ const EventDetail = ({
         }
     }
     useEffect(() => {
-        const checkFeedback = async () => {
-            const [isFeedbackResponse, isCheckedInResponse, isCheckoutTimeResponse] = await Promise.all([get(`events/${event?.id}/isFeedback`), get(`events/${event?.id}/isCheckedIn`), get(`events/${event?.id}/checkOutTime`)]);
 
-            if (isFeedbackResponse.status === 200 && isFeedbackResponse.data) {
-                setIsFeedback(true);
-            }
-            if (isCheckedInResponse.status === 200 && isCheckedInResponse.data) {
-                setIsCheckedIn(true);
-            }
-            if (isCheckedInResponse.status === 200 && isCheckoutTimeResponse.data) {
-                setIsCheckoutTime(true);
-            }
-        }
         checkFeedback();
         setIsRegistered(isParticipated(user?.rollnumber as string, event))
-    }, [isFocused])
+    }, [])
+    const checkFeedback = async () => {
+        const [isFeedbackResponse, isCheckedInResponse, isCheckoutTimeResponse, isCheckInTimeResponse] = await Promise.all([get(`events/${event?.id}/isFeedback`), get(`events/${event?.id}/isCheckedIn`), get(`events/${event?.id}/checkOutTime`), get(`events/${event?.id}/checkInTime`)]);
 
+        if (isFeedbackResponse.status === 200 && isFeedbackResponse.data) {
+            setIsFeedback(true);
+        }
+        if (isCheckedInResponse.status === 200 && isCheckedInResponse.data) {
+            setIsCheckedIn(true);
+        }
+        if (isCheckedInResponse.status === 200 && isCheckoutTimeResponse.data) {
+            setIsCheckoutTime(true);
+        }
+        if (isCheckInTimeResponse.status === 200 && isCheckInTimeResponse.data) {
+            setIsCheckedInTime(true);
+        }
+    }
+    const onRefresh = async () => {
+        setRefreshing(true);
 
+        // Fetch new data or update existing data
+        await checkFeedback();
+
+        setRefreshing(false);
+    };
     const eventDate = DateTime.fromMillis(eventStartTimestamp).setZone('Asia/Bangkok');
     const renderHeader = () => {
         return (
@@ -159,119 +174,6 @@ const EventDetail = ({
                         }}
                     /> : null}
                 </View>
-                {/* <Text style={styles.subtitle}>Speaker: </Text>
-
-                <SpeakerCourseItem
-                    instructorName="Fahmi Haecal"
-                    courseTitle="Front End Web Developer, Tokopedia"
-                    instructorAvatar={images.avatar2}
-                /> */}
-
-                {/* <View
-                    style={{
-                        flexDirection: 'row',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                    }}
-                >
-                    <Text style={styles.subtitle}>Course</Text>
-                    <View
-                        style={{
-                            paddingHorizontal: 6,
-                            paddingVertical: 3,
-                            borderRadius: 4,
-                            backgroundColor: COLORS.green,
-                            justifyContent: 'center',
-                            alignItems: 'center',
-                        }}
-                    >
-                        <Text
-                            style={{
-                                ...FONTS.body4,
-                                color: COLORS.white,
-                            }}
-                        >
-                            Free
-                        </Text>
-                    </View>
-                </View>
-
-                <View>
-                    <View
-                        style={{
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                        }}
-                    >
-                        <Text style={styles.chapter}>
-                            FE HTML CSS - Chapter 1 - Basic HTML
-                        </Text>
-
-                        <TouchableOpacity
-                            onPress={() => setIsTopicOpen(!isTopicOpen)}
-                        >
-                            <Image
-                                source={
-                                    isTopicOpen
-                                        ? icons.arrowUp
-                                        : icons.arrowDown
-                                }
-                                resizeMode="contain"
-                                style={{
-                                    height: 18,
-                                    width: 18,
-                                    tintColor: COLORS.black,
-                                }}
-                            />
-                        </TouchableOpacity>
-                    </View>
-                    {user?.role === 'ROLE_ADMIN' && <Button
-                        title="Check in"
-                        filled
-                        onPress={() => navigation.navigate('BarCodeScanner', { eventId: event?.id })}
-                        style={{
-                            height: 46,
-                            width: '100%',
-                        }}
-                    />}
-                    {isTopicOpen && (
-                        <View>
-                            <ChapterItem
-                                percentage="0"
-                                title="Topic 1 - Part 1 - Introduction HTML"
-                                duration="8:12"
-                                onPress={() =>
-                                    navigation.navigate('AccessChapter')
-                                }
-                            />
-                            <ChapterItem
-                                percentage="0"
-                                title="Topic 1 - Part 2 - Introduction HTML"
-                                duration="8:12"
-                                onPress={() =>
-                                    navigation.navigate('AccessChapter')
-                                }
-                            />
-                            <ChapterItem
-                                percentage="0"
-                                title="Topic 1 - Part 3 - Introduction HTML"
-                                duration="8:12"
-                                onPress={() =>
-                                    navigation.navigate('AccessChapter')
-                                }
-                            />
-                            <ChapterItem
-                                percentage="0"
-                                title="Topic 1 - Part 4 - Introduction HTML"
-                                duration="8:12"
-                                onPress={() =>
-                                    navigation.navigate('AccessChapter')
-                                }
-                            />
-                        </View>
-                    )}
-                </View> */}
             </View>
         )
     }
@@ -355,9 +257,26 @@ const EventDetail = ({
         </>
     );
 
+    const getViewCheckInQr = () => (
+        <>
+            {getTextBlock('Check in now!')}
+            <Button
+                title="Show QR code"
+                filled
+                onPress={() => setModalVisible(true)}
+                style={{
+                    height: 46,
+                    width: '100%',
+                }}
+            />
+        </>
+    )
+
     const getContentForFooter = () => {
         const isPassed = hasTimestampPassed(event?.startTime + event?.duration);
-
+        if (event.status > 3) {
+            return getTextBlock('Event has been finished!', 17);
+        }
         if (!isRegister && isPassed) {
             return getTextBlock('Event has been finished!', 17);
         }
@@ -366,10 +285,12 @@ const EventDetail = ({
             return getRegisterButton();
         }
 
-        if (!isCheckedIn && !isPassed) {
+        if (!isCheckedIn && !isPassed && !isCheckedInTime) {
             return getTextBlock('Please check in for this event!');
         }
-
+        if (!isCheckedIn && !isPassed && isCheckedInTime) {
+            return getViewCheckInQr();
+        }
         if (isCheckedIn && !isPassed && !isFeedback && !isCheckoutTime) {
             return getTextBlock('Event is in progress!');
         }
@@ -392,8 +313,33 @@ const EventDetail = ({
         <SafeAreaView style={styles.area}>
             <View style={styles.container}>
                 {renderHeader()}
-                <ScrollView showsVerticalScrollIndicator={false}>
+                <ScrollView showsVerticalScrollIndicator={false} refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                    />}>
                     {renderContent()}
+                    <Modal
+                        animationType="slide"
+                        transparent={true}
+                        visible={modalVisible}
+                        onRequestClose={() => {
+                            setModalVisible(false);
+                        }}
+                        onDismiss={() => setModalVisible(false)}
+                    >
+                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                            <View style={{ backgroundColor: 'white', padding: 20, borderRadius: 10, alignItems: 'center' }}>
+                                <QRCode
+                                    value={user?.rollnumber}
+                                    size={150}
+                                    color="black"
+                                    backgroundColor="white"
+                                />
+
+                            </View>
+                        </View>
+                    </Modal>
                 </ScrollView>
             </View>
             {event.status === 1 && renderFooter()}

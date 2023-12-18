@@ -31,7 +31,9 @@ const MyLearning = ({
     const [events, setEvents] = useState<any[]>([]);
     const isFocused = useIsFocused();
     const [refreshing, setRefreshing] = useState(false);
-
+    const filteredEvents = events.filter((event) =>
+        (event.title as string).toLowerCase().includes(search.toLowerCase())
+    );
     const { user } = state;
     useEffect(() => {
         let upcomingEvents: any[] = [];
@@ -167,7 +169,7 @@ const MyLearning = ({
                 }}
             >
                 <FlatList
-                    data={events} // Render only the first three elements
+                    data={filteredEvents} // Render only the first three elements
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
                         <MyLearningCard
@@ -176,6 +178,7 @@ const MyLearning = ({
                             numberOfParticipants={item.participants.length}
                             name={(item as any).title}
                             description={item.content}
+                            processStatus={item.processStatus}
                             eventStartTimestamp={item.startTime}
                             onPress={() => navigation.navigate('EventDetail', { event: item })}
                         />

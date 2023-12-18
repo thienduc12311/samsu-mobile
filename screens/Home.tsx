@@ -70,8 +70,9 @@ const Home = ({
             }
             if (eventsResponse.status === 200) {
                 const events = (eventsResponse.data as any).content;
-                upcomingEvents = (events as any[]).filter((event) => !hasTimestampPassed(event.startTime));
-                pastEvents = (events as any[]).filter((event) => hasTimestampPassed(event.startTime));
+                (events as any[]).forEach((event) => {
+                    if (!hasTimestampPassed(event.startTime) && event.processStatus < 3) { upcomingEvents.push(event) } else { pastEvents.push(event) }
+                })
                 setUpcomingEvents(upcomingEvents);
                 setPastEvents(pastEvents);
                 dispatch({ type: SET_MY_EVENT, payload: events })
@@ -278,7 +279,7 @@ const Home = ({
 
     const renderBanners = () => {
         return (
-            <View>
+            <View style={{ marginTop: 30 }}>
                 <BannerItem navigation={navigation} />
             </View>
         )
@@ -331,6 +332,8 @@ const Home = ({
                             name={(item as any).title}
                             startDate={(item as any).startTime}
                             numStudents={(item as any).participants.length}
+                            score={item.attendScore}
+                            department={item?.departments[0]?.name}
                             onPress={() => navigation.navigate('EventDetail', { event: item })}
                         />
                     )}
@@ -484,7 +487,7 @@ const Home = ({
                     ) : (
                         // Render other content once data is fetched
                         <>
-                                {renderSearchBar()}
+                                {/* {renderSearchBar()} */}
                                 {renderBanners()}
                                 {renderKeywords()}
                             {renderScore()}

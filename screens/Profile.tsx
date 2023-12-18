@@ -110,10 +110,10 @@ const Profile = ({
                             >
                                 If there are problems with the application,
                                 difficulty accessing the course or if you have
-                                questions, you can contact Whatsapp
+                                questions, you can contact Facebook
                             </Text>
                             <Button
-                                title="WhatsApp"
+                                title="Facebook"
                                 filled
                                 onPress={() => navigation.navigate('Home')}
                                 style={{
@@ -222,6 +222,11 @@ const Profile = ({
                         icon={icons.quality}
                         onPress={() => navigation.navigate('ListCertificate')}
                     />
+                    <MenuItem
+                        name="My Grade"
+                        icon={icons.document2}
+                        onPress={() => navigation.navigate('MyGrade')}
+                    />
                     {/* <MenuItem
                         name="BarCodeScanner"
                         icon={icons.quality}
@@ -249,11 +254,7 @@ const Profile = ({
                             navigation.navigate('TermsAndConditions')
                         }
                     />
-                    <MenuItem
-                        name="Rating App or Give Input"
-                        icon={icons.star}
-                        onPress={() => console.log('Rating App or Give Input')}
-                    />
+
                     <MenuItem
                         name="Help Center"
                         icon={icons.whatsapp}

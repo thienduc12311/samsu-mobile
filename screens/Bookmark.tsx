@@ -30,11 +30,47 @@ const Bookmark = ({
 
     const [loading, setLoading] = useState(true); // Loading state
     const [tickets, setTickets] = useState([]);
+    const [selectedKeywords, setSelectedKeywords] = useState<number[]>([-1]); // No default status
+    const [filteredTickets, setFilteredTickets] = useState<any[]>(tickets);
+    const searchTickets = (query: string) => {
+        const lowerCaseQuery = query.toLowerCase();
+        const tasksToFilter = tickets;
+
+        const filterByTitle = (task: any) => task.title.toLowerCase().includes(lowerCaseQuery);
+        const filterByStatus = (task: any) => selectedKeywords.length === 0 || selectedKeywords.includes(task.status);
+
+        const filtered = selectedKeywords[0] !== -1
+            ? tasksToFilter.filter((task) => filterByTitle(task) && filterByStatus(task))
+            : tasksToFilter.filter(filterByTitle);
+
+        setFilteredTickets(filtered);
+    };
+    const applyStatusFilter = (id: number) => {
+        if (selectedKeywords.length === 1 && id === -1) {
+            // "All" status selected, skip status filter
+            const filtered = tickets.filter((task: any) =>
+                task.title.toLowerCase().includes(search.toLowerCase())
+            );
+            setFilteredTickets(filtered);
+        } else {
+            // Apply both search and status filters
+            const tasks = tickets;
+            const filtered = tasks.filter((task: any) =>
+                task.title.toLowerCase().includes(search.toLowerCase()) && (id === task.status)
+            );
+            setFilteredTickets(filtered);
+        }
+    };
+    const handleKeywordPress = (id: number) => {
+        setSelectedKeywords([id]);
+        applyStatusFilter(id);
+    };
     const fetchData = async () => {
         try {
             const response = await get('/gradeTicket');
             if (response.status === 200) {
                 setTickets((response.data as any).content);
+                setFilteredTickets((response.data as any).content);
             }
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -119,7 +155,10 @@ const Bookmark = ({
                         // @ts-expect-error TS(2339): Property 'secondary' does not exist on type '{ pri... Remove this comment to see the full error message
                         placeholderTextColor={COLORS.secondary}
                         value={search}
-                        onChangeText={(text) => setSearch(text)}
+                        onChangeText={(text) => {
+                            setSearch(text);
+                            searchTickets(text);
+                        }}
                         style={{
                             fontSize: 14,
                             paddingHorizontal: 12,
@@ -165,22 +204,6 @@ const Bookmark = ({
      */
 
     const renderKeywords = () => {
-        const [selectedKeywords, setSelectedKeywords] = useState([])
-        const handleKeywordPress = (id: any) => {
-            // @ts-expect-error TS(2345): Argument of type '(prevSelectedKeywords: never[]) ... Remove this comment to see the full error message
-            setSelectedKeywords((prevSelectedKeywords) => {
-                // @ts-expect-error TS(2345): Argument of type 'any' is not assignable to parame... Remove this comment to see the full error message
-                if (prevSelectedKeywords.includes(id)) {
-                    // Remove keyword from the selection if already selected
-                    return prevSelectedKeywords.filter(
-                        (keywordId) => keywordId !== id
-                    )
-                } else {
-                    // Add keyword to the selection if not already selected
-                    return [...prevSelectedKeywords, id]
-                }
-            })
-        }
 
         return (
             <View style={{ marginVertical: 12 }}>
@@ -192,9 +215,8 @@ const Bookmark = ({
                     renderItem={({ item }) => (
                         <KeywordItem
                             item={item}
-                            onPress={handleKeywordPress}
-                            // @ts-expect-error TS(2345): Argument of type 'string' is not assignable to par... Remove this comment to see the full error message
-                            selected={selectedKeywords.includes(item.id)}
+                            onPress={() => handleKeywordPress(item.status)}
+                            selected={selectedKeywords.includes((item as any).status)}
                         />
                     )}
                 />
@@ -218,7 +240,7 @@ const Bookmark = ({
         return (
             <View>
                 <FlatList
-                    data={tickets}
+                    data={filteredTickets}
                     showsHorizontalScrollIndicator={false}
                     keyExtractor={(item) => (item as any).id}
                     renderItem={({ item }) => (

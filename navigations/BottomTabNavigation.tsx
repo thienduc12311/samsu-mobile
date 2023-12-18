@@ -155,7 +155,7 @@ const BottomTabNavigation = () => {
                                             : COLORS.secondaryGray,
                                     }}
                                 >
-                                    Public Event
+                                    Events
                                 </Text>
                             </View>
                         )

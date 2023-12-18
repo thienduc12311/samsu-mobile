@@ -274,7 +274,7 @@ const EventDetail = ({
 
     const getContentForFooter = () => {
         const isPassed = hasTimestampPassed(event?.startTime + event?.duration);
-        if (event.status > 3) {
+        if (event.processStatus > 3) {
             return getTextBlock('Event has been finished!', 17);
         }
         if (!isRegister && isPassed) {

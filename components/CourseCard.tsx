@@ -9,7 +9,9 @@ const CourseCard = ({
     name,
     startDate = 1,
     numStudents,
-    onPress
+    department,
+    onPress,
+    score
 }: any) => {
     const date = DateTime.fromMillis(startDate).setZone('Asia/Bangkok');
 
@@ -44,7 +46,8 @@ const CourseCard = ({
                         />
                         <Text style={styles.numStudents}>{numStudents}</Text>
                     </View>
-                    <Text style={styles.startDate}>{date.toFormat('HH:mm dd/MM/yyyy')}</Text>
+                    <Text style={styles.startDate}>Score: {score}</Text>
+                    <Text style={styles.startDate}>{department?.slice(0, 10)}</Text>
                 </View>
             </View>
         </TouchableOpacity>

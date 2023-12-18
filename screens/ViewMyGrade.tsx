@@ -2,7 +2,7 @@ import { AntDesign, Feather } from '@expo/vector-icons';
 import { useNavigation } from "@react-navigation/native";
 import { isNumber } from 'radash';
 import React, { useEffect, useState } from "react";
-import { ActivityIndicator, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { ActivityIndicator, RefreshControl, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import CircularProgress from 'react-native-circular-progress-indicator';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { COLORS } from "../constants";
@@ -12,7 +12,7 @@ import { get } from '../utils/helpers/api-helper';
 const ViewMyGrade = () => {
     const navigation = useNavigation();
     const { state, dispatch } = useAppContext();
-
+    const [refreshing, setRefreshing] = useState(false);
     const { user, semesters } = state;
     const [isOpen, setIsOpen] = useState(false);
     const [eventAttendance, setEventAttendance] = useState<any>();
@@ -24,44 +24,69 @@ const ViewMyGrade = () => {
     const [subCriteria, setSubCriteria] = useState<any>();
     const mappedSemesters = semesters?.map((semester) => ({ label: semester.name, value: semester.name }));
     useEffect(() => {
-        const fetchCurrentPoint = async () => {
-            setLoading(true); // Set loading to true before making the API call
-            try {
-                const gradeResponse = await get(`/grade/history/semester/${currentSemester}/me`);
-                if (gradeResponse.status === 200) {
-                    const grade = (gradeResponse.data as any).gradeHistory as any[];
-                    const achieve = grade.filter((item) => item.type === 2);
-                    const task = grade.filter(item => item.type === 1);
-                    const event = grade.filter(item => item.type === 0);
-                    setAchievementGrade(achieve);
-                    setEventAttendance(event);
-                    setTaskGrade(task);
-                    setGrade(gradeResponse.data as any);
-                    setSubCriteria((gradeResponse.data as any).gradeAllResponse.gradeSubCriteriaResponses)
-                }
-            } catch (error) {
-                console.error("Error fetching data:", error);
-            } finally {
-                setLoading(false); // Set loading to false after API call completes
-            }
-        };
+
 
         fetchCurrentPoint();
     }, [currentSemester]);
+    const onRefresh = async () => {
+        setRefreshing(true);
+
+        // Fetch new data or update existing data
+        await fetchCurrentPoint();
+
+        setRefreshing(false);
+    };
+    const fetchCurrentPoint = async () => {
+        setLoading(true); // Set loading to true before making the API call
+        try {
+            const gradeResponse = await get(`/grade/history/semester/${currentSemester}/me`);
+            if (gradeResponse.status === 200) {
+                const grade = (gradeResponse.data as any).gradeHistory as any[];
+                const achieve = grade.filter((item) => item.type === 2).reverse();
+                const task = grade.filter(item => item.type === 1).reverse();
+                const event = grade.filter(item => item.type === 0).reverse();
+                setAchievementGrade(achieve);
+                setEventAttendance(event);
+                setTaskGrade(task);
+                setGrade(gradeResponse.data as any);
+                setSubCriteria((gradeResponse.data as any).gradeAllResponse.gradeSubCriteriaResponses)
+            }
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        } finally {
+            setLoading(false); // Set loading to false after API call completes
+        }
+    };
     const getCriteriaText = (criteriaId: number) => {
         return (subCriteria as any[])?.find((item) => item.id === criteriaId).content;
     }
-    const [index, setIndex] = useState(0);
-    const [routes] = useState([
-        { key: 'achievement', title: 'Achievement Grade' },
-        { key: 'task', title: 'Task Grade' },
-        { key: 'participant', title: 'Participant Grade' },
-    ]);
-
     const [selectedTab, setSelectedTab] = useState('achievement');
-
+    const handleGradeDetailPress = async (grade: any) => {
+        if (grade.type === 1) {
+            const taskDetails = await get(`/tasks/${grade.id}`);
+            if (taskDetails.status === 200) {
+                // @ts-ignore
+                navigation.navigate('TaskDetails', { task: taskDetails.data });
+            }
+        }
+        if (grade.type === 2) {
+            const ticketDetails = await get(`/gradeTicket/${grade.id}`);
+            if (ticketDetails.status === 200) {
+                // @ts-ignore
+                navigation.navigate('GradeTicketDetail', { ticket: ticketDetails.data });
+            }
+        }
+        if (grade.type === 0) {
+            const eventDetail = await get(`/events/${grade.id}`);
+            if (eventDetail.status === 200) {
+                // @ts-ignore
+                navigation.navigate('EventDetail', { event: eventDetail.data });
+            }
+        }
+    }
     const renderGradeSection = (grades: any, title: string) => {
-        let totalScore = 0; // Initialize totalScore variable
+        let totalScore = 0;
+
         if (loading) {
             return (
                 <View style={styles.gradeSection}>
@@ -75,24 +100,26 @@ const ViewMyGrade = () => {
             <View style={styles.gradeSection}>
                 <Text style={styles.gradeSectionTitle}>{title}</Text>
                 {grades?.map((grade: any, index: any) => {
-                    // Update totalScore for each grade
                     totalScore += grade.score;
 
                     return (
                         <View key={index} style={styles.gradeItem}>
-                            <Text>{grade.title}</Text>
-                            <Text>Score: {grade.score}</Text>
-                            {isNumber(grade.gradeSubCriteriaId) ? <Text>Criteria: {getCriteriaText(grade.gradeSubCriteriaId)}</Text> : null}
+                            <TouchableOpacity onPress={() => handleGradeDetailPress(grade)}>
+                                <Text>{grade.title}</Text>
+                                <Text>Score: {grade.score}</Text>
+                                {isNumber(grade.gradeSubCriteriaId) ? (
+                                    <Text>Criteria: {getCriteriaText(grade.gradeSubCriteriaId)}</Text>
+                                ) : null}
+                            </TouchableOpacity>
                         </View>
                     );
                 })}
-                {/* Display the total at the end */}
                 <View style={[styles.gradeItem, { borderWidth: 0 }]}>
                     <Text style={{ fontWeight: 'bold' }}>Total Score: {totalScore}</Text>
                 </View>
             </View>
         );
-    }
+    };
     const renderHeader = () => {
         return (
             <View style={{
@@ -178,7 +205,6 @@ const ViewMyGrade = () => {
                     setOpen={setIsOpen}
                     setValue={setCurrentSemester}
                 />
-
                 {/* Display School Contest Grades */}
                 <View style={styles.buttonsContainer}>
                     <TouchableOpacity
@@ -200,11 +226,20 @@ const ViewMyGrade = () => {
                         <Text>Participant</Text>
                     </TouchableOpacity>
                 </View>
+                <ScrollView showsVerticalScrollIndicator={false} refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                    />}>
+                    {/* Render content based on the selected tab */}
+                    <View style={styles.container}>
+                        {/* Other components */}
+                        {selectedTab === 'achievement' && renderGradeSection(achievementGrade, 'Achievement Grade')}
+                        {selectedTab === 'participant' && renderGradeSection(eventAttendance, 'Participant Grade')}
+                        {selectedTab === 'task' && renderGradeSection(taskGrade, 'Task Grade')}
+                    </View>
+                </ScrollView>
 
-                {/* Render content based on the selected tab */}
-                {selectedTab === 'achievement' && renderGradeSection(achievementGrade, 'Achievement Grade')}
-                {selectedTab === 'task' && renderGradeSection(taskGrade, 'Task Grade')}
-                {selectedTab === 'participant' && renderGradeSection(eventAttendance, 'Participant Grade')}
             </View>
         </SafeAreaView>
     );
@@ -218,6 +253,7 @@ const styles = StyleSheet.create({
     container: {
         backgroundColor: COLORS.white,
         padding: 16,
+        overflow: 'scroll'
     },
     infoContainer: {
         flexDirection: 'row',
@@ -260,7 +296,8 @@ const styles = StyleSheet.create({
         color: '#666',
     },
     gradeSection: {
-        marginTop: 20,
+        marginTop: 5,
+        overflow: 'scroll'
     },
     gradeSectionTitle: {
         fontSize: 18,

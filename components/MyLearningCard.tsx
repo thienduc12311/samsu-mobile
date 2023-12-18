@@ -13,6 +13,7 @@ const MyLearningCard = ({
     numberOfParticipants,
     name,
     description,
+    processStatus,
     onPress, eventStartTimestamp = 1
 }: any) => {
     const trimmedDescription = stripHtmlTags(description).slice(0, 50);
@@ -43,7 +44,7 @@ const MyLearningCard = ({
                         justifyContent: 'space-between',
                     }}
                 >
-                    {hasTimestampPassed(eventStartTimestamp) ? <View
+                    {(hasTimestampPassed(eventStartTimestamp) || processStatus > 3) ? <View
                         style={{
                             paddingVertical: 2,
                             paddingHorizontal: 6,

@@ -14,6 +14,7 @@ const GradeTicketDetail = ({
      * Render header
      */
     const { ticket } = route.params;
+    console.log(ticket);
     const getStatusColor = (status: number) => {
         if (status === 2) return COLORS.red;
         if (status === 1) return COLORS.green;
@@ -122,6 +123,10 @@ const GradeTicketDetail = ({
                     <Text style={styles.subtitle}>Feedback</Text>
                     <Text style={styles.body}>
                         {ticket.feedback}
+                    </Text>
+                    <Text style={styles.subtitle}>Criteria</Text>
+                    <Text style={styles.body}>
+                        {ticket.gradeSubCriteria.content}
                     </Text>
                 </View>}
 

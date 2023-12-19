@@ -246,7 +246,7 @@ const TaskDetails = ({
                         Reject
                     </Text>
                 </TouchableOpacity>}
-                {task.status < 3 ? <TouchableOpacity
+                {task.status < 2 ? <TouchableOpacity
                     onPress={() => handleAcceptTask(task.status === 0 ? 1 : 3)}
                     style={{
                         width: 118,

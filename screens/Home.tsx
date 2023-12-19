@@ -384,6 +384,8 @@ const Home = ({
                             name={(item as any).title}
                             startDate={(item as any).startTime}
                             numStudents={(item as any).participants.length}
+                            score={item.attendScore}
+                            department={item?.departments[0]?.name}
                             onPress={() => navigation.navigate('EventDetail', { event: item })}
                         />
                     )}

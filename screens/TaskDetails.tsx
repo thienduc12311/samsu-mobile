@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { ScrollView } from 'react-native-virtualized-view'
 import Button from '../components/Button'
 import { COLORS, SIZES } from '../constants'
+import { hasTimestampPassed } from '../utils/date'
 import { get, put } from '../utils/helpers/api-helper'
 
 const TaskDetails = ({
@@ -47,6 +48,8 @@ const TaskDetails = ({
         }
     }
     const getStatusText = (status: number) => {
+        if (hasTimestampPassed(taskDeadline))
+            return 'Expired';
         switch (status) {
             case 1:
                 return 'Accepted'
@@ -58,6 +61,8 @@ const TaskDetails = ({
                 return 'Finished'
             case 5:
                 return 'Did not finish'
+            case 6:
+                return 'Expired'
             default:
                 return 'Pending'
         }
@@ -281,7 +286,7 @@ const TaskDetails = ({
                     {renderContent()}
                 </ScrollView>
             </View>
-            {renderFooter()}
+            {!hasTimestampPassed(taskDeadline) && renderFooter()}
         </SafeAreaView>
     )
 }

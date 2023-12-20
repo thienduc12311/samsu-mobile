@@ -211,7 +211,7 @@ const ViewMyGrade = () => {
                         style={[styles.tabButton, selectedTab === 'achievement' && styles.selectedTabButton]}
                         onPress={() => setSelectedTab('achievement')}
                     >
-                        <Text>Achievement</Text>
+                        <Text>Ticket</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                         style={[styles.tabButton, selectedTab === 'task' && styles.selectedTabButton]}
@@ -234,7 +234,7 @@ const ViewMyGrade = () => {
                     {/* Render content based on the selected tab */}
                     <View style={styles.container}>
                         {/* Other components */}
-                        {selectedTab === 'achievement' && renderGradeSection(achievementGrade, 'Achievement Grade')}
+                        {selectedTab === 'achievement' && renderGradeSection(achievementGrade, 'Ticket Grade')}
                         {selectedTab === 'participant' && renderGradeSection(eventAttendance, 'Participant Grade')}
                         {selectedTab === 'task' && renderGradeSection(taskGrade, 'Task Grade')}
                     </View>
